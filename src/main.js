@@ -1,8 +1,19 @@
+import Sortable from "sortablejs";
 import { createStorage, createState, persistState } from "./state.js";
 import { renderHistory, renderProgression } from "./renderer.js";
 import { bindEvents } from "./events.js";
-import { initSortable } from "./drag-utils.js";
 import { initWindowManager } from "./window-manager.js";
+
+const SORTABLE_DEFAULTS = {
+	animation: 150,
+	handle: ".drag-handle",
+	ghostClass: "drag-ghost",
+	chosenClass: "drag-chosen",
+	dragClass: "drag-item",
+	forceFallback: true,
+	fallbackOnBody: true,
+	swapThreshold: 0.65,
+};
 
 const getUiElements = () => ({
 	input: document.querySelector("#chord-input"),
@@ -44,7 +55,9 @@ const init = () => {
 	updateChord(ui, state, storage);
 
 	ui.progressionCurrent.forEach((container) => {
-		initSortable(container, {
+		if (!container) return;
+		new Sortable(container, {
+			...SORTABLE_DEFAULTS,
 			onEnd: (evt) => {
 				const { oldIndex, newIndex } = evt;
 				if (oldIndex === newIndex) return;
@@ -59,7 +72,9 @@ const init = () => {
 	});
 
 	ui.progressionHistory.forEach((container) => {
-		initSortable(container, {
+		if (!container) return;
+		new Sortable(container, {
+			...SORTABLE_DEFAULTS,
 			onEnd: (evt) => {
 				const { oldIndex, newIndex } = evt;
 				if (oldIndex === newIndex) return;
@@ -73,7 +88,7 @@ const init = () => {
 		});
 	});
 
-	initWindowManager();
+	initWindowManager(storage);
 };
 
 init();

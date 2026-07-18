@@ -14,29 +14,28 @@ const debounce = (fn, delay) => {
 	};
 };
 
-const saveWindowState = debounce((state) => {
+const loadWindowState = (storage) => {
 	try {
-		localStorage.setItem(WINDOW_STATE_KEY, JSON.stringify(state));
-	} catch (e) {
-		console.warn("Failed to save window state:", e);
-	}
-}, 300);
-
-const loadWindowState = () => {
-	try {
-		const saved = localStorage.getItem(WINDOW_STATE_KEY);
-		return saved ? JSON.parse(saved) : DEFAULT_WINDOW_STATE;
+		return storage.load(WINDOW_STATE_KEY, DEFAULT_WINDOW_STATE);
 	} catch (e) {
 		console.warn("Failed to load window state:", e);
 		return DEFAULT_WINDOW_STATE;
 	}
 };
 
-const initFloatingWindowDrag = () => {
+const initFloatingWindowDrag = (storage) => {
 	const floatingWindow = document.querySelector("#progression-floating-window");
 	const header = document.querySelector("#progression-window-header");
 
 	if (!floatingWindow || !header) return;
+
+	const saveWindowState = debounce((state) => {
+		try {
+			storage.save(WINDOW_STATE_KEY, state);
+		} catch (e) {
+			console.warn("Failed to save window state:", e);
+		}
+	}, 300);
 
 	let isDragging = false;
 	let startX, startY;
@@ -120,7 +119,7 @@ const initFloatingWindowDrag = () => {
 	window.addEventListener("mouseup", stopDrag);
 	window.addEventListener("touchend", stopDrag);
 
-	const state = loadWindowState();
+	const state = loadWindowState(storage);
 	floatingWindow.style.left = state.x + "px";
 	floatingWindow.style.top = state.y + "px";
 	floatingWindow.style.width = state.width + "px";
@@ -149,11 +148,19 @@ const initFloatingWindowDrag = () => {
 	window.addEventListener("resize", constrainWindowBounds);
 };
 
-const initFloatingWindowResize = () => {
+const initFloatingWindowResize = (storage) => {
 	const floatingWindow = document.querySelector("#progression-floating-window");
 	const resizeHandle = document.querySelector("#progression-resize-handle");
 
 	if (!floatingWindow || !resizeHandle) return;
+
+	const saveWindowState = debounce((state) => {
+		try {
+			storage.save(WINDOW_STATE_KEY, state);
+		} catch (e) {
+			console.warn("Failed to save window state:", e);
+		}
+	}, 300);
 
 	let isResizing = false;
 	let startX, startY;
@@ -213,7 +220,7 @@ const initFloatingWindowResize = () => {
 	window.addEventListener("touchend", stopResize);
 };
 
-export const initWindowManager = () => {
-	initFloatingWindowDrag();
-	initFloatingWindowResize();
+export const initWindowManager = (storage) => {
+	initFloatingWindowDrag(storage);
+	initFloatingWindowResize(storage);
 };

@@ -22,7 +22,6 @@ harmonia/
 │   ├── styles.css          # Tailwind CSS v4 with custom components
 │   ├── chord-utils.js      # Music theory utilities (chord parsing, key definitions)
 │   ├── chord-function.js   # Harmonic function analysis (Roman numerals)
-│   ├── drag-utils.js       # SortableJS wrapper for drag-and-drop
 │   ├── tests/              # Browser-based test framework
 │   │   ├── index.html      # Test runner
 │   │   ├── chord-utils.test.js
@@ -51,7 +50,6 @@ harmonia/
     - `window-manager.js`: Floating window drag/resize & state persistence
     - `chord-utils.js`: Pure music theory utilities (no side effects)
     - `chord-function.js`: Harmonic analysis logic
-    - `drag-utils.js`: UI interaction wrapper
 - **Single-Page Application**: All UI logic in one HTML file with embedded modal
 - **Factory Pattern**: `createStorage()`, `createState()` for abstraction
 
