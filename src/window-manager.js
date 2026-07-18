@@ -1,7 +1,7 @@
 const WINDOW_STATE_KEY = "harmonia:windowState";
 const DEFAULT_WINDOW_STATE = {
-	x: window.innerWidth - 400,
-	y: (window.innerHeight - 480) / 2,
+	x: window.innerWidth - 404,
+	y: window.innerHeight - 572,
 	width: 380,
 	height: 480,
 };

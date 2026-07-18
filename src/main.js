@@ -17,6 +17,7 @@ const SORTABLE_DEFAULTS = {
 
 const getUiElements = () => ({
 	input: document.querySelector("#chord-input"),
+	inputLabel: document.querySelector("#input-label"),
 	keyRoot: document.querySelector("#key-root"),
 	modeMajor: document.querySelector("#mode-major"),
 	modeMinor: document.querySelector("#mode-minor"),
@@ -31,6 +32,8 @@ const getUiElements = () => ({
 	progressionSave: document.querySelectorAll("#progression-save, #progression-save-modal"),
 	progressionCurrent: document.querySelectorAll("#progressionCurrent"),
 	progressionHistory: document.querySelectorAll("#progressionHistory"),
+	progressionRecommendation: document.querySelector("#progressionRecommendation"),
+	recommendationChips: document.querySelector("#recommendationChips"),
 	floatingWindow: document.querySelector("#progression-floating-window"),
 	sidebarClose: document.querySelector("#sidebar-close"),
 	sidebarBackdrop: document.querySelector("#sidebar-backdrop"),
@@ -47,7 +50,7 @@ const init = () => {
 	setModeToggle(ui, state.keyMode);
 	setInputModeToggle(ui, state.inputMode);
 	populateRootSelect(ui, state, state.keyMode);
-	renderProgression(ui, state);
+	renderProgression(ui, state, storage);
 	updateChord(ui, state, storage);
 
 	ui.progressionCurrent.forEach((container) => {
@@ -62,7 +65,7 @@ const init = () => {
 				state.progression.splice(newIndex, 0, movedItem);
 
 				persistState(storage, state);
-				renderProgression(ui, state);
+				renderProgression(ui, state, storage);
 			},
 		});
 	});
@@ -79,7 +82,7 @@ const init = () => {
 				state.progressionHistory.splice(newIndex, 0, movedItem);
 
 				persistState(storage, state);
-				renderProgression(ui, state);
+				renderProgression(ui, state, storage);
 			},
 		});
 	});

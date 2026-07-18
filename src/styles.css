@@ -509,6 +509,18 @@
 		/* 可選：添加額外樣式 */
 	}
 
+	.chip--recommend {
+		@apply cursor-pointer transition-all duration-200;
+		background: rgba(99, 144, 255, 0.1);
+		border: 1px dashed rgba(99, 144, 255, 0.4);
+	}
+
+	.chip--recommend:hover {
+		background: rgba(99, 144, 255, 0.2);
+		border-color: rgba(99, 144, 255, 0.6);
+		transform: translateY(-1px);
+	}
+
 	.chip-content {
 		@apply flex items-center gap-1.5;
 	}
@@ -519,6 +531,13 @@
 
 	.chip-text {
 		@apply tracking-[0.2em];
+	}
+
+	.chip-remove {
+		@apply ml-1 w-4 h-4 flex items-center justify-center rounded-full text-ink/40 hover:text-ink/70 hover:bg-ink/10 transition-all;
+		font-size: 12px;
+		padding: 0;
+		transform: translateX(0.5px);
 	}
 
 	.drag-handle {
@@ -706,39 +725,57 @@
 	/* 移動端響應式設計 */
 	@media (max-width: 640px) {
 		.progression-window {
-			width: 100%;
-			max-width: 100%;
-			bottom: 0;
-			left: 0;
-			right: 0;
-			border-radius: 20px 20px 0 0;
-			box-shadow:
-				0 -8px 40px rgba(0, 0, 0, 0.15),
-				inset 0 0 0 1px rgba(255, 255, 255, 0.4);
+			display: none !important;
 		}
 
-		.progression-window-header {
-			border-radius: 20px 20px 0 0;
-		}
-
-		.progression-resize-handle {
-			display: none;
+		.fab {
+			display: none !important;
 		}
 	}
 
 	.fab {
 		@apply fixed bottom-6 right-6 w-14 h-14 rounded-full 
-			   bg-gradient-to-br from-violet-500 to-fuchsia-600 
-			   text-white shadow-lg shadow-violet-500/30
 			   flex items-center justify-center
 			   transition-all duration-200 ease-out
-			   hover:scale-110 hover:shadow-xl hover:shadow-violet-500/40
-			   active:scale-95;
+			   hover:scale-110 active:scale-95;
 		z-index: 50;
+		background: rgba(99, 144, 255, 0.1);
+		backdrop-filter: blur(20px) saturate(160%);
+		-webkit-backdrop-filter: blur(20px) saturate(160%);
+		border: 1px solid rgba(79, 124, 255, 0.15);
+		box-shadow:
+			0 4px 20px rgba(99, 144, 255, 0.15),
+			0 2px 8px rgba(15, 23, 42, 0.08),
+			0 0 0 1px rgba(79, 124, 255, 0.1),
+			inset 0 1px 2px rgba(255, 255, 255, 0.4),
+			inset 0 -1px 3px rgba(99, 144, 255, 0.06);
+		color: rgba(27, 29, 32, 0.75);
+	}
+
+	.fab::after {
+		content: "";
+		position: absolute;
+		inset: -2px;
+		border-radius: inherit;
+		background: linear-gradient(135deg, rgba(79, 124, 255, 0.25) 0%, rgba(79, 124, 255, 0.08) 40%, transparent 60%);
+		-webkit-mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		mask:
+			linear-gradient(#fff 0 0) content-box,
+			linear-gradient(#fff 0 0);
+		-webkit-mask-composite: xor;
+		mask-composite: exclude;
+		padding: 1px;
+		pointer-events: none;
+		opacity: 0.8;
 	}
 
 	.fab-icon {
 		@apply w-6 h-6;
+		fill: none;
+		stroke: currentColor;
+		stroke-width: 2;
 	}
 
 	@media (max-width: 640px) {

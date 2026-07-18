@@ -8,6 +8,64 @@ import {
 	toAbcKey,
 } from "./chord-utils.js";
 import { analyzeChordFunction } from "./chord-function.js";
+import { persistState } from "./state.js";
+
+// 和弦功能推薦：根據當前功能推薦下一個功能
+const FUNCTION_RECOMMENDATIONS = {
+	tonic: "subdominant",
+	subdominant: "dominant",
+	dominant: "tonic",
+};
+
+// 各功能對應的音級（大調）
+const FUNCTION_SCALE_DEGREES = {
+	tonic: [1, 3, 6],
+	subdominant: [2, 4],
+	dominant: [5, 7],
+};
+
+// 根據音級生成羅馬數字
+const getRomanForDegree = (degree, mode) => {
+	const numerals = ["I", "ii", "iii", "IV", "V", "vi", "vii°"];
+	if (mode === "minor") {
+		const minorNumerals = ["i", "ii°", "III", "iv", "v", "VI", "VII"];
+		return minorNumerals[degree - 1] || "";
+	}
+	return numerals[degree - 1] || "";
+};
+
+// 根據音級生成和弦名稱
+const getChordForDegree = (degree, keyDefinition) => {
+	const { scale, mode } = keyDefinition;
+	const root = scale[degree - 1];
+	if (!root) return null;
+
+	// 大調音階中各級和弦類型
+	const majorChordTypes = ["", "m", "m", "", "", "m", "dim"];
+	const minorChordTypes = ["", "dim", "", "m", "m", "", ""];
+	const chordTypes = mode === "minor" ? minorChordTypes : majorChordTypes;
+	const chordType = chordTypes[degree - 1];
+
+	return root + chordType;
+};
+
+// 獲取推薦和弦
+const getRecommendedChords = (lastChord, keyDefinition) => {
+	if (!lastChord || !keyDefinition) return [];
+
+	const chordFunction = analyzeChordFunction(lastChord, keyDefinition);
+	if (!chordFunction || !chordFunction.function) return [];
+
+	const nextFunction = FUNCTION_RECOMMENDATIONS[chordFunction.function];
+	if (!nextFunction) return [];
+
+	const degrees = FUNCTION_SCALE_DEGREES[nextFunction];
+	return degrees.map((degree) => ({
+		chord: getChordForDegree(degree, keyDefinition),
+		roman: getRomanForDegree(degree, keyDefinition.mode),
+		function: nextFunction,
+	})).filter((item) => item.chord);
+};
 
 const renderEmptyState = (container, message) => {
 	container.innerHTML = "";
@@ -17,7 +75,12 @@ const renderEmptyState = (container, message) => {
 	container.appendChild(empty);
 };
 
-export const renderProgression = (ui, state) => {
+const clearPaper = (paper) => {
+	paper.innerHTML = "";
+	paper.removeAttribute("style");
+};
+
+export const renderProgression = (ui, state, storage) => {
 	const keyDefinition = getKeyDefinition(state.keyRoot, state.keyMode);
 
 	ui.progressionCurrent.forEach((container) => {
@@ -80,12 +143,53 @@ export const renderProgression = (ui, state) => {
 				text.textContent = formattedChord;
 				contentContainer.appendChild(text);
 
+				const removeBtn = document.createElement("button");
+				removeBtn.className = "chip-remove";
+				removeBtn.innerHTML = "×";
+				removeBtn.title = "移除";
+				removeBtn.addEventListener("click", (e) => {
+					e.stopPropagation();
+					state.progression.splice(index, 1);
+					persistState(storage, state);
+					renderProgression(ui, state, storage);
+				});
+
 				chip.appendChild(handle);
 				chip.appendChild(contentContainer);
+				chip.appendChild(removeBtn);
 				container.appendChild(chip);
 			});
 		}
 	});
+
+	// 推薦下一個和弦
+	if (ui.progressionRecommendation && ui.recommendationChips) {
+		const lastChord = state.progression[state.progression.length - 1];
+		const recommendations = getRecommendedChords(lastChord, keyDefinition);
+
+		if (recommendations.length > 0 && state.progression.length > 0) {
+			ui.progressionRecommendation.classList.remove("hidden");
+			ui.recommendationChips.innerHTML = "";
+
+			recommendations.forEach((rec) => {
+				const recChip = document.createElement("button");
+				recChip.className = "chip chip--recommend";
+				recChip.dataset.chord = rec.chord;
+				recChip.innerHTML = `
+					<span class="chip-roman">${rec.roman}</span>
+					<span class="chip-text">${rec.chord}</span>
+				`;
+				recChip.addEventListener("click", () => {
+					state.progression.push(rec.chord);
+					persistState(storage, state);
+					renderProgression(ui, state, storage);
+				});
+				ui.recommendationChips.appendChild(recChip);
+			});
+		} else {
+			ui.progressionRecommendation.classList.add("hidden");
+		}
+	}
 
 	ui.progressionHistory.forEach((container) => {
 		if (!state.progressionHistory.length) {
@@ -136,15 +240,15 @@ export const renderProgression = (ui, state) => {
 
 export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefinition) => {
 	if (!detectedChords || detectedChords.length === 0) {
-		ui.chordOutput.textContent = "找不到對應的和弦，請確認音符是否正確。";
-		ui.paper.innerHTML = "";
+		ui.chordOutput.innerHTML = '<p class="empty-state">找不到對應的和弦，請確認音符是否正確。</p>';
+		clearPaper(ui.paper);
 		return;
 	}
 
 	const topChords = detectedChords.slice(0, 3);
 
 	ui.chordOutput.innerHTML = "";
-	ui.paper.innerHTML = "";
+	clearPaper(ui.paper);
 
 	const title = document.createElement("p");
 	title.textContent = `從音符推測和弦 (${detectedChords.length} 個可能):`;
@@ -190,17 +294,21 @@ export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefi
 	}
 };
 
+const renderEmptyResult = (ui) => {
+	ui.chordOutput.innerHTML = '<p class="empty-state">輸入和弦代號以查看結果。</p>';
+	clearPaper(ui.paper);
+};
+
 export const renderChord = (ui, state, chordResult) => {
 	if (chordResult.status === "empty") {
-		ui.chordOutput.textContent = "";
-		ui.paper.innerHTML = "";
+		renderEmptyResult(ui);
 		state.currentChord = null;
 		return;
 	}
 
 	if (chordResult.status === "invalid") {
-		ui.chordOutput.textContent = "找不到對應的和弦，請確認代號是否正確。";
-		ui.paper.innerHTML = "";
+		ui.chordOutput.innerHTML = '<p class="empty-state">找不到對應的和弦，請確認代號是否正確。</p>';
+		clearPaper(ui.paper);
 		state.currentChord = null;
 		return;
 	}
@@ -245,7 +353,7 @@ export const renderChord = (ui, state, chordResult) => {
 	outputHtml += `</div>`;
 
 	ui.chordOutput.innerHTML = outputHtml;
-	ui.paper.innerHTML = "";
+	clearPaper(ui.paper);
 
 	const switchBtn = ui.chordOutput.querySelector(".enharmonic-switch");
 	if (switchBtn) {

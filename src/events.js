@@ -42,6 +42,14 @@ const setInputModeToggle = (ui, mode) => {
 	ui.modeChord.setAttribute("aria-pressed", String(mode === "chord"));
 	ui.modeNotes.setAttribute("aria-pressed", String(mode === "notes"));
 	moveToggleSlider(ui.inputModeToggleSlider, mode === "chord" ? ui.modeChord : ui.modeNotes);
+	
+	if (mode === "chord") {
+		ui.inputLabel.textContent = "和弦代號";
+		ui.input.placeholder = "例如：Cmaj7、F#m7b5、Bb13";
+	} else {
+		ui.inputLabel.textContent = "組成音";
+		ui.input.placeholder = "例如：C E G、D F# A";
+	}
 };
 
 const populateRootSelect = (ui, state, mode) => {
@@ -122,7 +130,7 @@ const addProgressionItem = (storage, ui, state) => {
 	}
 	state.progression.push(state.currentChord.symbol);
 	persistState(storage, state);
-	renderProgression(ui, state);
+	renderProgression(ui, state, storage);
 };
 
 const saveProgression = (storage, ui, state) => {
@@ -132,7 +140,7 @@ const saveProgression = (storage, ui, state) => {
 	state.progressionHistory.unshift([...state.progression]);
 	state.progressionHistory = state.progressionHistory.slice(0, 20);
 	persistState(storage, state);
-	renderProgression(ui, state);
+	renderProgression(ui, state, storage);
 };
 
 const bindRemoveHandler = (container, onRemove) => {
@@ -160,9 +168,15 @@ const openSidebar = (ui) => {
 const closeSidebar = (ui) => {
 	if (ui.floatingWindow) {
 		ui.floatingWindow.classList.remove("open");
-		setTimeout(() => {
-			ui.floatingWindow.style.display = "none";
-		}, 200);
+		ui.floatingWindow.style.display = "none";
+	}
+};
+
+const toggleSidebar = (ui) => {
+	if (ui.floatingWindow?.classList.contains("open")) {
+		closeSidebar(ui);
+	} else {
+		openSidebar(ui);
 	}
 };
 
@@ -173,7 +187,7 @@ export const bindEvents = (ui, state, storage) => {
 		state.displaySymbol = null;
 		persistState(storage, state);
 		updateChord(ui, state, storage);
-		renderProgression(ui, state);
+		renderProgression(ui, state, storage);
 	});
 	ui.modeMajor.addEventListener("click", () => {
 		if (state.keyMode === "major") {
@@ -185,7 +199,7 @@ export const bindEvents = (ui, state, storage) => {
 		populateRootSelect(ui, state, state.keyMode);
 		persistState(storage, state);
 		updateChord(ui, state, storage);
-		renderProgression(ui, state);
+		renderProgression(ui, state, storage);
 	});
 	ui.modeMinor.addEventListener("click", () => {
 		if (state.keyMode === "minor") {
@@ -197,7 +211,7 @@ export const bindEvents = (ui, state, storage) => {
 		populateRootSelect(ui, state, state.keyMode);
 		persistState(storage, state);
 		updateChord(ui, state, storage);
-		renderProgression(ui, state);
+		renderProgression(ui, state, storage);
 	});
 	ui.modeChord.addEventListener("click", () => {
 		if (state.inputMode === "chord") {
@@ -223,7 +237,7 @@ export const bindEvents = (ui, state, storage) => {
 		btn.addEventListener("click", () => {
 			state.progression = [];
 			persistState(storage, state);
-			renderProgression(ui, state);
+			renderProgression(ui, state, storage);
 		}),
 	);
 	ui.progressionSave.forEach((btn) => btn.addEventListener("click", () => saveProgression(storage, ui, state)));
@@ -232,11 +246,11 @@ export const bindEvents = (ui, state, storage) => {
 		bindRemoveHandler(container, (index) => {
 			state.progressionHistory.splice(index, 1);
 			persistState(storage, state);
-			renderProgression(ui, state);
+			renderProgression(ui, state, storage);
 		});
 	});
 
-	ui.fabOpenProgression?.addEventListener("click", () => openSidebar(ui));
+	ui.fabOpenProgression?.addEventListener("click", () => toggleSidebar(ui));
 	ui.sidebarClose?.addEventListener("click", () => closeSidebar(ui));
 	ui.sidebarBackdrop?.addEventListener("click", () => closeSidebar(ui));
 	window.addEventListener("keydown", (e) => {
