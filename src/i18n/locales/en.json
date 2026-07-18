@@ -1,0 +1,45 @@
+{
+  "header": {
+    "subtitle": "Decompose Notes & Chords"
+  },
+  "key": {
+    "label": "Song Key"
+  },
+  "chord": {
+    "label": "Chord Symbol",
+    "placeholder": "e.g. Cmaj7, F#m7b5, Bb13",
+    "notesPlaceholder": "e.g. C E G, D F# A",
+    "empty": "Enter a chord symbol to see the result.",
+    "notFound": "Chord not found. Please check the symbol.",
+    "notFoundNotes": "Chord not found. Please check the notes.",
+    "notesLabel": "Notes: ",
+    "notInKey": "Not in key",
+    "detected": "Detected chords from notes ({{count}} possible):",
+    "more": "And {{count}} more possibilities...",
+    "enharmonicTip": "Tip: {{current}} is usually spelled as {{preferred}} in this key",
+    "useInstead": "Use {{preferred}}"
+  },
+  "inputMode": {
+    "chord": "Chord",
+    "notes": "Notes"
+  },
+  "progression": {
+    "title": "Progression",
+    "add": "Add",
+    "clear": "Clear",
+    "save": "Save Progression",
+    "recommendation": "Recommended Next",
+    "current": "Current",
+    "saved": "Saved",
+    "empty": "No progression yet.",
+    "emptyHistory": "No saved progressions."
+  },
+  "actions": {
+    "remove": "Remove",
+    "load": "Load",
+    "resize": "Resize"
+  },
+  "fab": {
+    "ariaLabel": "Open/Close Progression window"
+  }
+}

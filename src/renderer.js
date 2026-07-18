@@ -9,6 +9,7 @@ import {
 } from "./chord-utils.js";
 import { analyzeChordFunction } from "./chord-function.js";
 import { persistState } from "./state.js";
+import { t } from "./i18n/index.js";
 
 const debounce = (fn, delay) => {
 	let timeoutId;
@@ -143,7 +144,7 @@ export const renderProgression = (ui, state, storage) => {
 
 	ui.progressionCurrent.forEach((container) => {
 		if (!state.progression.length) {
-			renderEmptyState(container, "進程尚未開始。");
+			renderEmptyState(container, t('progression.empty'));
 		} else {
 			const fragment = document.createDocumentFragment();
 			state.progression.forEach((chord, index) => {
@@ -195,7 +196,7 @@ export const renderProgression = (ui, state, storage) => {
 				const removeBtn = document.createElement("button");
 				removeBtn.className = "chip-remove";
 				removeBtn.innerHTML = "×";
-				removeBtn.title = "移除";
+				removeBtn.title = t('actions.remove');
 				removeBtn.addEventListener("click", (e) => {
 					e.stopPropagation();
 					state.progression.splice(index, 1);
@@ -245,7 +246,7 @@ export const renderProgression = (ui, state, storage) => {
 
 	ui.progressionHistory.forEach((container) => {
 		if (!state.progressionHistory.length) {
-			renderEmptyState(container, "還沒有保存的進程。");
+			renderEmptyState(container, t('progression.emptyHistory'));
 			return;
 		}
 
@@ -287,7 +288,7 @@ export const renderProgression = (ui, state, storage) => {
 			load.type = "button";
 			load.dataset.index = String(index);
 			load.dataset.action = "load";
-			load.title = "載入";
+			load.title = t('actions.load');
 			load.innerHTML = SVG_LOAD_ICON;
 
 			const remove = document.createElement("button");
@@ -295,7 +296,7 @@ export const renderProgression = (ui, state, storage) => {
 			remove.type = "button";
 			remove.dataset.index = String(index);
 			remove.dataset.action = "remove";
-			remove.title = "移除";
+			remove.title = t('actions.remove');
 			remove.innerHTML = SVG_REMOVE_ICON;
 
 			actions.appendChild(load);
@@ -313,7 +314,7 @@ export const renderProgression = (ui, state, storage) => {
 
 export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefinition) => {
 	if (!detectedChords || detectedChords.length === 0) {
-		ui.chordOutput.innerHTML = '<p class="empty-state">找不到對應的和弦，請確認音符是否正確。</p>';
+		ui.chordOutput.innerHTML = `<p class="empty-state">${t('chord.notFoundNotes')}</p>`;
 		clearPaper(ui.paper);
 		return;
 	}
@@ -323,7 +324,7 @@ export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefi
 	const fragment = document.createDocumentFragment();
 
 	const title = document.createElement("p");
-	title.textContent = `從音符推測和弦 (${detectedChords.length} 個可能):`;
+	title.textContent = t('chord.detected', { count: detectedChords.length });
 	title.className = "mb-2 font-medium";
 	fragment.appendChild(title);
 
@@ -357,7 +358,7 @@ export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefi
 	if (detectedChords.length > 3) {
 		const more = document.createElement("p");
 		more.className = "text-sm text-ink/50 mt-2";
-		more.textContent = `還有 ${detectedChords.length - 3} 個其他可能...`;
+		more.textContent = t('chord.more', { count: detectedChords.length - 3 });
 		fragment.appendChild(more);
 	}
 
@@ -367,7 +368,7 @@ export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefi
 };
 
 const renderEmptyResult = (ui) => {
-	ui.chordOutput.innerHTML = '<p class="empty-state">輸入和弦代號以查看結果。</p>';
+	ui.chordOutput.innerHTML = `<p class="empty-state">${t('chord.empty')}</p>`;
 	clearPaper(ui.paper);
 };
 
@@ -379,7 +380,7 @@ export const renderChord = (ui, state, chordResult) => {
 	}
 
 	if (chordResult.status === "invalid") {
-		ui.chordOutput.innerHTML = '<p class="empty-state">找不到對應的和弦，請確認代號是否正確。</p>';
+		ui.chordOutput.innerHTML = `<p class="empty-state">${t('chord.notFound')}</p>`;
 		clearPaper(ui.paper);
 		state.currentChord = null;
 		return;
@@ -396,7 +397,7 @@ export const renderChord = (ui, state, chordResult) => {
 
 	let outputHtml = `<div class="chord-result">`;
 	outputHtml += `<div class="chord-symbol">${displaySymbol}</div>`;
-	outputHtml += `<div class="chord-notes">組成音：${chordResult.notes.join(" ")}</div>`;
+	outputHtml += `<div class="chord-notes">${t('chord.notesLabel')}${chordResult.notes.join(" ")}</div>`;
 
 	if (chordResult.function) {
 		const roman = chordResult.function.roman;
@@ -410,15 +411,15 @@ export const renderChord = (ui, state, chordResult) => {
 		outputHtml += `<span class="function-desc">${func}</span>`;
 		outputHtml += `</div>`;
 	} else {
-		outputHtml += `<div class="chord-analysis">非調內和弦</div>`;
+		outputHtml += `<div class="chord-analysis">${t('chord.notInKey')}</div>`;
 	}
 
 	if (chordResult.enharmonicSuggestion?.shouldSuggest) {
 		const { current, preferred } = chordResult.enharmonicSuggestion;
 		outputHtml += `<div class="enharmonic-suggestion">`;
 		outputHtml += `<span class="suggestion-icon">💡</span>`;
-		outputHtml += `<span class="suggestion-text">提示：${current} 在此調性中通常記為 ${preferred}</span>`;
-		outputHtml += `<button class="enharmonic-switch" data-preferred="${preferred}" data-symbol="${chordResult.symbol}">改用 ${preferred}</button>`;
+		outputHtml += `<span class="suggestion-text">${t('chord.enharmonicTip', { current, preferred })}</span>`;
+		outputHtml += `<button class="enharmonic-switch" data-preferred="${preferred}" data-symbol="${chordResult.symbol}">${t('chord.useInstead', { preferred })}</button>`;
 		outputHtml += `</div>`;
 	}
 

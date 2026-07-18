@@ -1,8 +1,9 @@
 import Sortable from "sortablejs";
 import { createStorage, createState, persistState } from "./state.js";
-import { renderProgression } from "./renderer.js";
+import { renderProgression, renderChord } from "./renderer.js";
 import { bindEvents } from "./events.js";
 import { initWindowManager } from "./window-manager.js";
+import { initI18n, setLang, getLang } from "./i18n/index.js";
 
 const SORTABLE_DEFAULTS = {
 	animation: 150,
@@ -40,7 +41,9 @@ const getUiElements = () => ({
 	fabOpenProgression: document.querySelector("#fab-open-progression"),
 });
 
-const init = () => {
+const init = async () => {
+	await initI18n();
+
 	const ui = getUiElements();
 	const storage = createStorage(window.localStorage);
 	const state = createState(storage);
@@ -88,6 +91,29 @@ const init = () => {
 	});
 
 	initWindowManager(storage);
+
+	const langSelect = document.querySelector("#lang-select");
+	if (langSelect) {
+		langSelect.value = getLang();
+		langSelect.addEventListener("change", (e) => {
+			setLang(e.target.value);
+		});
+	}
+
+	window.addEventListener("langChange", () => {
+		setInputModeToggle(ui, state.inputMode);
+		renderProgression(ui, state, storage);
+		if (state.currentChord) {
+			const chordResult = {
+				status: "valid",
+				symbol: state.currentChord.symbol,
+				notes: state.currentChord.notes,
+				notesWithOctave: state.currentChord.notesWithOctave,
+				function: state.currentChord.function,
+			};
+			renderChord(ui, state, chordResult);
+		}
+	});
 };
 
 init();

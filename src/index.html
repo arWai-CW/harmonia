@@ -18,11 +18,27 @@
 				<header class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 sm:gap-4">
 					<div>
 						<h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Harmonia</h1>
-						<p class="text-base text-ink/65 sm:text-lg">拆解 組成音 與 和弦</p>
+						<p class="text-base text-ink/65 sm:text-lg" data-i18n="header.subtitle">拆解 組成音 與 和弦</p>
 					</div>
-					<div class="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-3">
+					<div class="flex flex-col items-start sm:items-end gap-2">
+						<div class="flex items-center gap-1.5">
+							<svg class="w-3.5 h-3.5 text-ink/50 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<circle cx="12" cy="12" r="10"/>
+								<line x1="2" y1="12" x2="22" y2="12"/>
+								<path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+							</svg>
+							<div class="relative">
+								<select id="lang-select" class="input-field !py-1 !px-1 sm:!px-2 !text-xs appearance-none pr-5 sm:pr-7 w-full sm:w-24">
+									<option value="zh-TW">繁體中文</option>
+									<option value="zh-CN">简体中文</option>
+									<option value="en">English</option>
+									<option value="ja">日本語</option>
+								</select>
+								<span class="select-arrow text-xs right-0.5 sm:right-2">▾</span>
+							</div>
+						</div>
 						<div class="flex items-center gap-2 sm:justify-start">
-							<label class="text-xs font-medium text-ink/50 whitespace-nowrap" for="key-root"
+							<label class="text-xs font-medium text-ink/50 whitespace-nowrap" for="key-root" data-i18n="key.label"
 								>歌曲調性</label
 							>
 							<div class="relative flex-1 sm:flex-none">
@@ -32,8 +48,6 @@
 								></select>
 								<span class="select-arrow text-xs right-1 sm:right-4">▾</span>
 							</div>
-						</div>
-						<div class="flex justify-start sm:justify-start">
 							<div class="mode-toggle !p-0.5 !rounded-xl flex-1" role="group" aria-label="Mode">
 								<span class="toggle-slider !rounded-xl"></span>
 								<button
@@ -60,12 +74,13 @@
 				</header>
 
 				<div class="space-y-4">
-					<label id="input-label" class="text-sm font-medium text-ink/70" for="chord-input">和弦代號</label>
+					<label id="input-label" class="text-sm font-medium text-ink/70" for="chord-input" data-i18n="chord.label">和弦代號</label>
 					<div class="relative">
 						<input
 							type="text"
 							id="chord-input"
 							placeholder="例如：Cmaj7、F#m7b5、Bb13"
+							data-i18n-placeholder="chord.placeholder"
 							class="input-field"
 							autocomplete="off"
 							inputmode="text"
@@ -79,10 +94,11 @@
 							class="input-mode-toggle__button is-active"
 							type="button"
 							data-mode="chord"
+							data-i18n="inputMode.chord"
 						>
 							和弦
 						</button>
-						<button id="mode-notes" class="input-mode-toggle__button" type="button" data-mode="notes">
+						<button id="mode-notes" class="input-mode-toggle__button" type="button" data-mode="notes" data-i18n="inputMode.notes">
 							組成音
 						</button>
 					</div>
@@ -91,7 +107,7 @@
 				<div class="result-card">
 					<p class="text-sm uppercase tracking-[0.2em] text-ink/45">Result</p>
 					<div id="chordOutput" class="mt-3 text-lg font-medium text-ink/85">
-						<p class="empty-state">輸入和弦代號以查看結果。</p>
+						<p class="empty-state" data-i18n="chord.empty">輸入和弦代號以查看結果。</p>
 					</div>
 					<div id="paper" class="mt-6"></div>
 				</div>
@@ -100,12 +116,12 @@
 					<div class="flex items-center justify-between gap-4">
 						<p class="text-sm uppercase tracking-[0.2em] text-ink/45">Progression</p>
 						<div class="flex gap-2">
-							<button id="progression-add" class="pill-button">加入</button>
-							<button id="progression-clear" class="pill-button pill-button--ghost">清空</button>
+							<button id="progression-add" class="pill-button" data-i18n="progression.add">加入</button>
+							<button id="progression-clear" class="pill-button pill-button--ghost" data-i18n="progression.clear">清空</button>
 						</div>
 					</div>
 					<div id="progressionRecommendation" class="hidden">
-						<p class="text-xs uppercase tracking-[0.2em] text-ink/45">推薦下一個</p>
+						<p class="text-xs uppercase tracking-[0.2em] text-ink/45" data-i18n="progression.recommendation">推薦下一個</p>
 						<div id="recommendationChips" class="chip-stack mt-2"></div>
 					</div>
 					<div>
@@ -114,7 +130,7 @@
 					</div>
 					<div class="flex items-center justify-between gap-4">
 						<p class="text-xs uppercase tracking-[0.2em] text-ink/45">Saved</p>
-						<button id="progression-save" class="pill-button pill-button--soft">儲存進程</button>
+						<button id="progression-save" class="pill-button pill-button--soft" data-i18n="progression.save">儲存進程</button>
 					</div>
 					<div id="progressionHistory" class="list-stack"></div>
 				</div>
@@ -144,8 +160,8 @@
 					<div class="flex items-center justify-between gap-4">
 						<p class="text-sm uppercase tracking-[0.2em] text-ink/45">Progression</p>
 						<div class="flex gap-2">
-							<button id="progression-add-modal" class="pill-button">加入</button>
-							<button id="progression-clear-modal" class="pill-button pill-button--ghost">清空</button>
+							<button id="progression-add-modal" class="pill-button" data-i18n="progression.add">加入</button>
+							<button id="progression-clear-modal" class="pill-button pill-button--ghost" data-i18n="progression.clear">清空</button>
 						</div>
 					</div>
 					<div>
@@ -154,15 +170,15 @@
 					</div>
 					<div class="flex items-center justify-between gap-4">
 						<p class="text-xs uppercase tracking-[0.2em] text-ink/45">Saved</p>
-						<button id="progression-save-modal" class="pill-button pill-button--soft">儲存進程</button>
+						<button id="progression-save-modal" class="pill-button pill-button--soft" data-i18n="progression.save">儲存進程</button>
 					</div>
 					<div id="progressionHistory" class="list-stack"></div>
 				</div>
 			</div>
-			<div id="progression-resize-handle" class="progression-resize-handle" title="調整大小"></div>
+			<div id="progression-resize-handle" class="progression-resize-handle" title="調整大小" data-i18n-title="actions.resize"></div>
 		</div>
 
-		<button id="fab-open-progression" class="fab" aria-label="打開/關閉 Progression 視窗">
+		<button id="fab-open-progression" class="fab" aria-label="打開/關閉 Progression 視窗" data-i18n-aria="fab.ariaLabel">
 			<svg class="fab-icon" viewBox="0 0 24 24">
 				<path d="M3 18h6v-2H3v2zM3 6v2h18V6H3zm0 7h12v-2H3v2z" />
 			</svg>

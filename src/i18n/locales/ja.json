@@ -1,0 +1,45 @@
+{
+  "header": {
+    "subtitle": "音と和音を分解"
+  },
+  "key": {
+    "label": "曲のキー"
+  },
+  "chord": {
+    "label": "コード記号",
+    "placeholder": "例：Cmaj7、F#m7b5、Bb13",
+    "notesPlaceholder": "例：C E G、D F# A",
+    "empty": "コード記号を入力して結果を表示。",
+    "notFound": "コードが見つかりません。記号を確認してください。",
+    "notFoundNotes": "コードが見つかりません。音符を確認してください。",
+    "notesLabel": "構成音：",
+    "notInKey": "調内コードではない",
+    "detected": "音符からコードを推測 ({{count}} 個の可能性):",
+    "more": "他に {{count}} 個の可能性...",
+    "enharmonicTip": "ヒント：{{current}} はこのキーで {{preferred}} と表記されることが多い",
+    "useInstead": "{{preferred}} を使用"
+  },
+  "inputMode": {
+    "chord": "コード",
+    "notes": "構成音"
+  },
+  "progression": {
+    "title": "Progression",
+    "add": "追加",
+    "clear": "クリア",
+    "save": "進行を保存",
+    "recommendation": "おすすめ次コード",
+    "current": "Current",
+    "saved": "Saved",
+    "empty": "まだ進行がありません。",
+    "emptyHistory": "保存された進行はありません。"
+  },
+  "actions": {
+    "remove": "削除",
+    "load": "読込",
+    "resize": "サイズ調整"
+  },
+  "fab": {
+    "ariaLabel": "Progression ウィンドウを開く/閉じる"
+  }
+}

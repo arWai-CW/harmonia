@@ -1,0 +1,45 @@
+{
+  "header": {
+    "subtitle": "拆解 组成音 与 和弦"
+  },
+  "key": {
+    "label": "歌曲调性"
+  },
+  "chord": {
+    "label": "和弦代号",
+    "placeholder": "例如：Cmaj7、F#m7b5、Bb13",
+    "notesPlaceholder": "例如：C E G、D F# A",
+    "empty": "输入和弦代号以查看结果。",
+    "notFound": "找不到对应的和弦，请确认代号是否正确。",
+    "notFoundNotes": "找不到对应的和弦，请确认音符是否正确。",
+    "notesLabel": "组成音：",
+    "notInKey": "非调内和弦",
+    "detected": "从音符推测和弦 ({{count}} 个可能):",
+    "more": "还有 {{count}} 个其他可能...",
+    "enharmonicTip": "提示：{{current}} 在此调性中通常记为 {{preferred}}",
+    "useInstead": "改用 {{preferred}}"
+  },
+  "inputMode": {
+    "chord": "和弦",
+    "notes": "组成音"
+  },
+  "progression": {
+    "title": "Progression",
+    "add": "加入",
+    "clear": "清空",
+    "save": "保存进程",
+    "recommendation": "推荐下一个",
+    "current": "Current",
+    "saved": "Saved",
+    "empty": "进程尚未开始。",
+    "emptyHistory": "还没有保存的进程。"
+  },
+  "actions": {
+    "remove": "移除",
+    "load": "载入",
+    "resize": "调整大小"
+  },
+  "fab": {
+    "ariaLabel": "打开/关闭 Progression 窗口"
+  }
+}

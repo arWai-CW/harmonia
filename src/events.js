@@ -17,6 +17,7 @@ import {
 	renderChord,
 	renderDetectedChords,
 } from "./renderer.js";
+import { t } from "./i18n/index.js";
 import { Chord } from "tonal";
 
 const debounce = (fn, delay) => {
@@ -52,11 +53,11 @@ const setInputModeToggle = (ui, mode) => {
 	moveToggleSlider(ui.inputModeToggleSlider, mode === "chord" ? ui.modeChord : ui.modeNotes);
 	
 	if (mode === "chord") {
-		ui.inputLabel.textContent = "和弦代號";
-		ui.input.placeholder = "例如：Cmaj7、F#m7b5、Bb13";
+		ui.inputLabel.textContent = t("chord.label");
+		ui.input.placeholder = t("chord.placeholder");
 	} else {
-		ui.inputLabel.textContent = "組成音";
-		ui.input.placeholder = "例如：C E G、D F# A";
+		ui.inputLabel.textContent = t("inputMode.notes");
+		ui.input.placeholder = t("chord.notesPlaceholder");
 	}
 };
 
