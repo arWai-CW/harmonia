@@ -11,6 +11,8 @@ const getUiElements = () => ({
 	modeMinor: document.querySelector("#mode-minor"),
 	modeChord: document.querySelector("#mode-chord"),
 	modeNotes: document.querySelector("#mode-notes"),
+	modeToggleSlider: document.querySelector(".mode-toggle .toggle-slider"),
+	inputModeToggleSlider: document.querySelector(".input-mode-toggle .toggle-slider"),
 	chordOutput: document.querySelector("#chordOutput"),
 	paper: document.querySelector("#paper"),
 	historyButtons: document.querySelector("#historyButtons"),

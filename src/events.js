@@ -28,12 +28,21 @@ const detectInputType = (input) => {
 	return "chord";
 };
 
+const moveToggleSlider = (slider, activeButton) => {
+	if (!slider || !activeButton) return;
+	const container = activeButton.parentElement;
+	const buttons = container.querySelectorAll(".mode-toggle__button, .input-mode-toggle__button");
+	const index = Array.from(buttons).indexOf(activeButton);
+	slider.style.transform = `translateX(${index * 100}%)`;
+};
+
 const setModeToggle = (ui, mode) => {
 	const isMajor = mode === "major";
 	ui.modeMajor.classList.toggle("is-active", isMajor);
 	ui.modeMinor.classList.toggle("is-active", !isMajor);
 	ui.modeMajor.setAttribute("aria-pressed", String(isMajor));
 	ui.modeMinor.setAttribute("aria-pressed", String(!isMajor));
+	moveToggleSlider(ui.modeToggleSlider, isMajor ? ui.modeMajor : ui.modeMinor);
 };
 
 const setInputModeToggle = (ui, mode) => {
@@ -41,6 +50,7 @@ const setInputModeToggle = (ui, mode) => {
 	ui.modeNotes.classList.toggle("is-active", mode === "notes");
 	ui.modeChord.setAttribute("aria-pressed", String(mode === "chord"));
 	ui.modeNotes.setAttribute("aria-pressed", String(mode === "notes"));
+	moveToggleSlider(ui.inputModeToggleSlider, mode === "chord" ? ui.modeChord : ui.modeNotes);
 };
 
 const populateRootSelect = (ui, state, mode) => {
