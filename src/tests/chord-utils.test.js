@@ -1,4 +1,4 @@
-import { getKeyDefinition, spellNotesInKey, parseNotesInput, normalizeNote, isValidNote, isNoteNameOnly, stripOctave } from "../src/chord-utils.js";
+import { getKeyDefinition, spellNotesInKey, parseNotesInput, normalizeNote, isValidNote, isNoteNameOnly, stripOctave } from "../chord-utils.js";
 
 const assertEqual = (actual, expected, message) => {
 	if (actual !== expected) {

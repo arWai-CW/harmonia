@@ -8,6 +8,7 @@ import {
 	spellNotesInKey,
 	spellNotesWithOctaveInKey,
 	shouldSuggestEnharmonic,
+	detectInputType,
 } from "./chord-utils.js";
 import { analyzeChordFunction } from "./chord-function.js";
 import { persistState } from "./state.js";
@@ -18,15 +19,6 @@ import {
 	renderDetectedChords,
 } from "./renderer.js";
 import { Chord } from "tonal";
-
-const detectInputType = (input) => {
-	const notes = parseNotesInput(input);
-	const validNotes = notes.filter(isValidNote);
-	if (validNotes.length >= 3) {
-		return "notes";
-	}
-	return "chord";
-};
 
 const moveToggleSlider = (slider, activeButton) => {
 	if (!slider || !activeButton) return;
