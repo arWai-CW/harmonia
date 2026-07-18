@@ -281,6 +281,13 @@ export const bindEvents = (ui, state, storage) => {
 		}
 	});
 
+	window.addEventListener("inputModeChange", (e) => {
+		const { mode } = e.detail;
+		state.inputMode = mode;
+		setInputModeToggle(ui, mode);
+		persistState(storage, state);
+	});
+
 	return {
 		updateChord,
 		setModeToggle,

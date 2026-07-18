@@ -31,18 +31,53 @@ const renderAbcDebounced = debounce(() => {
 	abcjs.renderAbc("paper", abcText);
 }, 300);
 
-// 和弦功能推薦：根據當前功能推薦下一個功能
+const SVG_DRAG_HANDLE_6_DOTS = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+	<circle cx="9" cy="5" r="1"></circle>
+	<circle cx="9" cy="12" r="1"></circle>
+	<circle cx="9" cy="19" r="1"></circle>
+	<circle cx="15" cy="5" r="1"></circle>
+	<circle cx="15" cy="12" r="1"></circle>
+	<circle cx="15" cy="19" r="1"></circle>
+</svg>`;
+
+const SVG_DRAG_HANDLE_2_LINES = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+	<line x1="8" y1="9" x2="16" y2="9"></line>
+	<line x1="8" y1="15" x2="16" y2="15"></line>
+</svg>`;
+
+const SVG_LOAD_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+	<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+	<polyline points="7 10 12 15 17 10"></polyline>
+	<line x1="12" y1="15" x2="12" y2="3"></line>
+</svg>`;
+
+const SVG_REMOVE_ICON = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+	<line x1="18" y1="6" x2="6" y2="18"></line>
+	<line x1="6" y1="6" x2="18" y2="18"></line>
+</svg>`;
+
 const FUNCTION_RECOMMENDATIONS = {
 	tonic: "subdominant",
 	subdominant: "dominant",
 	dominant: "tonic",
 };
 
-// 各功能對應的音級（大調）
 const FUNCTION_SCALE_DEGREES = {
 	tonic: [1, 3, 6],
 	subdominant: [2, 4],
 	dominant: [5, 7],
+};
+
+const chordFunctionCache = new Map();
+
+const getCachedChordFunction = (chord, keyDefinition) => {
+	const cacheKey = `${chord}|${keyDefinition.id}|${keyDefinition.mode}`;
+	if (chordFunctionCache.has(cacheKey)) {
+		return chordFunctionCache.get(cacheKey);
+	}
+	const result = analyzeChordFunction(chord, keyDefinition);
+	chordFunctionCache.set(cacheKey, result);
+	return result;
 };
 
 // 根據音級生成羅馬數字
@@ -74,7 +109,7 @@ const getChordForDegree = (degree, keyDefinition) => {
 const getRecommendedChords = (lastChord, keyDefinition) => {
 	if (!lastChord || !keyDefinition) return [];
 
-	const chordFunction = analyzeChordFunction(lastChord, keyDefinition);
+	const chordFunction = getCachedChordFunction(lastChord, keyDefinition);
 	if (!chordFunction || !chordFunction.function) return [];
 
 	const nextFunction = FUNCTION_RECOMMENDATIONS[chordFunction.function];
@@ -110,13 +145,13 @@ export const renderProgression = (ui, state, storage) => {
 		if (!state.progression.length) {
 			renderEmptyState(container, "進程尚未開始。");
 		} else {
-			container.innerHTML = "";
+			const fragment = document.createDocumentFragment();
 			state.progression.forEach((chord, index) => {
 				const chip = document.createElement("span");
 				chip.className = "chip";
 				chip.dataset.index = String(index);
 
-				const chordFunction = analyzeChordFunction(chord, keyDefinition);
+				const chordFunction = getCachedChordFunction(chord, keyDefinition);
 
 				if (chordFunction && chordFunction.color) {
 					chip.classList.add(`chip--${chordFunction.color}`);
@@ -131,16 +166,7 @@ export const renderProgression = (ui, state, storage) => {
 
 				const handle = document.createElement("span");
 				handle.className = "drag-handle";
-				handle.innerHTML = `
-					<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-						<circle cx="9" cy="5" r="1"></circle>
-						<circle cx="9" cy="12" r="1"></circle>
-						<circle cx="9" cy="19" r="1"></circle>
-						<circle cx="15" cy="5" r="1"></circle>
-						<circle cx="15" cy="12" r="1"></circle>
-						<circle cx="15" cy="19" r="1"></circle>
-					</svg>
-				`;
+				handle.innerHTML = SVG_DRAG_HANDLE_6_DOTS;
 
 				const contentContainer = document.createElement("span");
 				contentContainer.className = "chip-content";
@@ -180,19 +206,20 @@ export const renderProgression = (ui, state, storage) => {
 				chip.appendChild(handle);
 				chip.appendChild(contentContainer);
 				chip.appendChild(removeBtn);
-				container.appendChild(chip);
+				fragment.appendChild(chip);
 			});
+			container.innerHTML = "";
+			container.appendChild(fragment);
 		}
 	});
 
-	// 推薦下一個和弦
 	if (ui.progressionRecommendation && ui.recommendationChips) {
 		const lastChord = state.progression[state.progression.length - 1];
 		const recommendations = getRecommendedChords(lastChord, keyDefinition);
 
 		if (recommendations.length > 0 && state.progression.length > 0) {
 			ui.progressionRecommendation.classList.remove("hidden");
-			ui.recommendationChips.innerHTML = "";
+			const fragment = document.createDocumentFragment();
 
 			recommendations.forEach((rec) => {
 				const recChip = document.createElement("button");
@@ -207,8 +234,10 @@ export const renderProgression = (ui, state, storage) => {
 					persistState(storage, state);
 					renderProgression(ui, state, storage);
 				});
-				ui.recommendationChips.appendChild(recChip);
+				fragment.appendChild(recChip);
 			});
+			ui.recommendationChips.innerHTML = "";
+			ui.recommendationChips.appendChild(fragment);
 		} else {
 			ui.progressionRecommendation.classList.add("hidden");
 		}
@@ -220,7 +249,7 @@ export const renderProgression = (ui, state, storage) => {
 			return;
 		}
 
-		container.innerHTML = "";
+		const fragment = document.createDocumentFragment();
 		state.progressionHistory.forEach((progression, index) => {
 			const row = document.createElement("div");
 			row.className = "list-item";
@@ -228,12 +257,7 @@ export const renderProgression = (ui, state, storage) => {
 
 			const handle = document.createElement("span");
 			handle.className = "drag-handle drag-handle--list";
-			handle.innerHTML = `
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="8" y1="9" x2="16" y2="9"></line>
-					<line x1="8" y1="15" x2="16" y2="15"></line>
-				</svg>
-			`;
+			handle.innerHTML = SVG_DRAG_HANDLE_2_LINES;
 
 			const text = document.createElement("div");
 			text.className = "list-item-text";
@@ -245,7 +269,7 @@ export const renderProgression = (ui, state, storage) => {
 					arrow.textContent = "→";
 					text.appendChild(arrow);
 				}
-				const chordFunction = analyzeChordFunction(chord, keyDefinition);
+				const chordFunction = getCachedChordFunction(chord, keyDefinition);
 				const chip = document.createElement("span");
 				chip.className = "chip chip--light";
 				if (chordFunction?.color) {
@@ -264,13 +288,7 @@ export const renderProgression = (ui, state, storage) => {
 			load.dataset.index = String(index);
 			load.dataset.action = "load";
 			load.title = "載入";
-			load.innerHTML = `
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-					<polyline points="7 10 12 15 17 10"></polyline>
-					<line x1="12" y1="15" x2="12" y2="3"></line>
-				</svg>
-			`;
+			load.innerHTML = SVG_LOAD_ICON;
 
 			const remove = document.createElement("button");
 			remove.className = "icon-button icon-button--icon";
@@ -278,12 +296,7 @@ export const renderProgression = (ui, state, storage) => {
 			remove.dataset.index = String(index);
 			remove.dataset.action = "remove";
 			remove.title = "移除";
-			remove.innerHTML = `
-				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-					<line x1="18" y1="6" x2="6" y2="18"></line>
-					<line x1="6" y1="6" x2="18" y2="18"></line>
-				</svg>
-			`;
+			remove.innerHTML = SVG_REMOVE_ICON;
 
 			actions.appendChild(load);
 			actions.appendChild(remove);
@@ -291,8 +304,10 @@ export const renderProgression = (ui, state, storage) => {
 			row.appendChild(handle);
 			row.appendChild(text);
 			row.appendChild(actions);
-			container.appendChild(row);
+			fragment.appendChild(row);
 		});
+		container.innerHTML = "";
+		container.appendChild(fragment);
 	});
 };
 
@@ -305,16 +320,15 @@ export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefi
 
 	const topChords = detectedChords.slice(0, 3);
 
-	ui.chordOutput.innerHTML = "";
-	clearPaper(ui.paper);
+	const fragment = document.createDocumentFragment();
 
 	const title = document.createElement("p");
 	title.textContent = `從音符推測和弦 (${detectedChords.length} 個可能):`;
 	title.className = "mb-2 font-medium";
-	ui.chordOutput.appendChild(title);
+	fragment.appendChild(title);
 
 	topChords.forEach((chordName, index) => {
-		const chordFunction = analyzeChordFunction(chordName, keyDefinition);
+		const chordFunction = getCachedChordFunction(chordName, keyDefinition);
 		const resultEl = document.createElement("div");
 		resultEl.className = "detected-chord mb-2 cursor-pointer hover:bg-white/10 rounded p-2 transition-colors";
 		resultEl.dataset.chord = chordName;
@@ -332,24 +346,24 @@ export const renderDetectedChords = (ui, state, storage, detectedChords, keyDefi
 
 		resultEl.addEventListener("click", () => {
 			ui.input.value = chordName;
-			state.inputMode = "chord";
-			ui.modeChord.classList.toggle("is-active", true);
-			ui.modeNotes.classList.toggle("is-active", false);
-			ui.modeChord.setAttribute("aria-pressed", "true");
-			ui.modeNotes.setAttribute("aria-pressed", "false");
 			state.displaySymbol = null;
+			window.dispatchEvent(new CustomEvent("inputModeChange", { detail: { mode: "chord" } }));
 			ui.input.dispatchEvent(new Event("input"));
 		});
 
-		ui.chordOutput.appendChild(resultEl);
+		fragment.appendChild(resultEl);
 	});
 
 	if (detectedChords.length > 3) {
 		const more = document.createElement("p");
 		more.className = "text-sm text-ink/50 mt-2";
 		more.textContent = `還有 ${detectedChords.length - 3} 個其他可能...`;
-		ui.chordOutput.appendChild(more);
+		fragment.appendChild(more);
 	}
+
+	ui.chordOutput.innerHTML = "";
+	ui.chordOutput.appendChild(fragment);
+	clearPaper(ui.paper);
 };
 
 const renderEmptyResult = (ui) => {
