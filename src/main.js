@@ -1,6 +1,6 @@
 import Sortable from "sortablejs";
 import { createStorage, createState, persistState } from "./state.js";
-import { renderHistory, renderProgression } from "./renderer.js";
+import { renderProgression } from "./renderer.js";
 import { bindEvents } from "./events.js";
 import { initWindowManager } from "./window-manager.js";
 
@@ -26,9 +26,6 @@ const getUiElements = () => ({
 	inputModeToggleSlider: document.querySelector(".input-mode-toggle .toggle-slider"),
 	chordOutput: document.querySelector("#chordOutput"),
 	paper: document.querySelector("#paper"),
-	historyButtons: document.querySelector("#historyButtons"),
-	historyAdd: document.querySelector("#history-add"),
-	historyClear: document.querySelector("#history-clear"),
 	progressionAdd: document.querySelectorAll("#progression-add, #progression-add-modal"),
 	progressionClear: document.querySelectorAll("#progression-clear, #progression-clear-modal"),
 	progressionSave: document.querySelectorAll("#progression-save, #progression-save-modal"),
@@ -50,7 +47,6 @@ const init = () => {
 	setModeToggle(ui, state.keyMode);
 	setInputModeToggle(ui, state.inputMode);
 	populateRootSelect(ui, state, state.keyMode);
-	renderHistory(ui, state);
 	renderProgression(ui, state);
 	updateChord(ui, state, storage);
 

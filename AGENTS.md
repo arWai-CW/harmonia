@@ -122,7 +122,7 @@ harmonia/
 
 ### JavaScript Style
 
-- **Variables**: camelCase (`currentChord`, `historyArray`)
+- **Variables**: camelCase (`currentChord`, `progression`)
 - **Constants**: UPPER_SNAKE_CASE (`STORAGE_KEYS`, `MAJOR_ROOTS`)
 - **Functions**: camelCase with descriptive verbs (`sanitizeChordInput`, `renderProgression`)
 - **Classes**: PascalCase (not currently used in codebase)
@@ -184,7 +184,6 @@ const createStorage = (backend) => ({
 // Centralized state container (state.js)
 const createState = (storage) => ({
 	currentChord: null,
-	history: storage.load(STORAGE_KEYS.HISTORY, []),
 	progression: storage.load(STORAGE_KEYS.PROGRESSION, []),
 	progressionHistory: storage.load(STORAGE_KEYS.PROGRESSION_HISTORY, []),
 	keyRoot: storage.load(STORAGE_KEYS.KEY_ROOT, "C"),

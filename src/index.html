@@ -15,23 +15,42 @@
 
 		<main class="mx-auto flex min-h-screen max-w-5xl flex-col justify-center px-6 py-14">
 			<section class="glass-card space-y-8">
-				<header class="space-y-3">
-					<h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Harmonia</h1>
-					<p class="text-base text-ink/65 sm:text-lg">拆解 組成音 和 和弦</p>
-					<a
-						class="inline-flex items-center gap-2 m-1 text-sm font-medium text-ink/70 hover:text-ink"
-						href="https://nicechord.com"
-					>
-						<span class="h-2 w-2 rounded-full bg-ink/30"></span>
-						Fork from: NiceChord 好和弦
-					</a>
-					<a
-						class="inline-flex items-center gap-2 m-1 text-sm font-medium text-ink/70 hover:text-ink"
-						href="https://nicechord.com"
-					>
-						<span class="h-2 w-2 rounded-full bg-ink/30"></span>
-						Edit : arWai
-					</a>
+				<header class="flex items-end justify-between gap-4">
+					<div>
+						<h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Harmonia</h1>
+						<p class="text-base text-ink/65 sm:text-lg">拆解 組成音 與 和弦</p>
+					</div>
+					<div class="flex items-center gap-3">
+						<label class="text-xs font-medium text-ink/50 whitespace-nowrap" for="key-root">歌曲調性</label>
+						<div class="flex items-center gap-2">
+							<div class="relative">
+								<select
+									id="key-root"
+									class="input-field !py-2 !px-3 !text-sm appearance-none pr-10 w-28"
+								></select>
+								<span class="select-arrow text-xs">▾</span>
+							</div>
+							<div class="mode-toggle !p-0.5 !rounded-xl" role="group" aria-label="Mode">
+								<span class="toggle-slider !rounded-xl"></span>
+								<button
+									id="mode-major"
+									class="mode-toggle__button !px-3 !py-1.5 !text-xs !rounded-xl"
+									type="button"
+									data-mode="major"
+								>
+									Major
+								</button>
+								<button
+									id="mode-minor"
+									class="mode-toggle__button !px-3 !py-1.5 !text-xs !rounded-xl"
+									type="button"
+									data-mode="minor"
+								>
+									Minor
+								</button>
+							</div>
+						</div>
+					</div>
 				</header>
 
 				<div class="space-y-4">
@@ -61,39 +80,6 @@
 							組成音
 						</button>
 					</div>
-					<!-- 歷史按鈕區域 -->
-					<div class="flex items-center justify-between mt-4">
-						<div class="flex items-center gap-3 min-w-0">
-							<p class="text-xs uppercase tracking-[0.2em] text-ink/45 shrink-0">History</p>
-							<div class="history-scroll-container">
-								<div id="historyButtons" class="flex gap-1"></div>
-							</div>
-						</div>
-						<div class="flex gap-2 shrink-0">
-							<button id="history-add" class="pill-button">加入</button>
-							<button id="history-clear" class="pill-button pill-button--ghost">清空</button>
-						</div>
-					</div>
-				</div>
-
-				<div class="space-y-3">
-					<label class="text-sm font-medium text-ink/70" for="key-root">歌曲調性</label>
-					<div class="grid gap-3 sm:grid-cols-[1.2fr_1fr]">
-						<div class="relative">
-							<select id="key-root" class="input-field appearance-none pr-12"></select>
-							<span class="select-arrow">▾</span>
-						</div>
-						<div class="mode-toggle" role="group" aria-label="Mode">
-							<span class="toggle-slider"></span>
-							<button id="mode-major" class="mode-toggle__button" type="button" data-mode="major">
-								Major
-							</button>
-							<button id="mode-minor" class="mode-toggle__button" type="button" data-mode="minor">
-								Minor
-							</button>
-						</div>
-					</div>
-					<p class="text-xs text-ink/45">調性會影響顯示音名（例如 C# major 會顯示 E#）。</p>
 				</div>
 
 				<div class="result-card">

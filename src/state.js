@@ -1,5 +1,4 @@
 export const STORAGE_KEYS = {
-	HISTORY: "harmonia.history",
 	PROGRESSION: "harmonia.progression",
 	PROGRESSION_HISTORY: "harmonia.progressionHistory",
 	KEY_ROOT: "harmonia.keyRoot",
@@ -27,7 +26,6 @@ export const createStorage = (backend) => ({
 
 export const createState = (storage) => ({
 	currentChord: null,
-	history: storage.load(STORAGE_KEYS.HISTORY, []),
 	progression: storage.load(STORAGE_KEYS.PROGRESSION, []),
 	progressionHistory: storage.load(STORAGE_KEYS.PROGRESSION_HISTORY, []),
 	keyRoot: storage.load(STORAGE_KEYS.KEY_ROOT, "C"),
@@ -37,7 +35,6 @@ export const createState = (storage) => ({
 });
 
 export const persistState = (storage, state) => {
-	storage.save(STORAGE_KEYS.HISTORY, state.history);
 	storage.save(STORAGE_KEYS.PROGRESSION, state.progression);
 	storage.save(STORAGE_KEYS.PROGRESSION_HISTORY, state.progressionHistory);
 	storage.save(STORAGE_KEYS.KEY_ROOT, state.keyRoot);

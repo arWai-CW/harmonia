@@ -17,23 +17,6 @@ const renderEmptyState = (container, message) => {
 	container.appendChild(empty);
 };
 
-export const renderHistory = (ui, state) => {
-	if (!state.history.length) {
-		ui.historyButtons.innerHTML = "";
-		return;
-	}
-
-	ui.historyButtons.innerHTML = "";
-	state.history.forEach((item, index) => {
-		const button = document.createElement("button");
-		button.className = "history-button";
-		button.type = "button";
-		button.dataset.index = String(index);
-		button.textContent = item;
-		ui.historyButtons.appendChild(button);
-	});
-};
-
 export const renderProgression = (ui, state) => {
 	const keyDefinition = getKeyDefinition(state.keyRoot, state.keyMode);
 

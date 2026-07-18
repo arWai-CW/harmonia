@@ -13,7 +13,6 @@ import {
 import { analyzeChordFunction } from "./chord-function.js";
 import { persistState } from "./state.js";
 import {
-	renderHistory,
 	renderProgression,
 	renderChord,
 	renderDetectedChords,
@@ -117,16 +116,6 @@ const updateChord = (ui, state, storage) => {
 	}
 };
 
-const addHistoryItem = (storage, ui, state) => {
-	if (!state.currentChord) {
-		return;
-	}
-	state.history.unshift(state.currentChord.symbol);
-	state.history = state.history.slice(0, 20);
-	persistState(storage, state);
-	renderHistory(ui, state);
-};
-
 const addProgressionItem = (storage, ui, state) => {
 	if (!state.currentChord) {
 		return;
@@ -228,12 +217,6 @@ export const bindEvents = (ui, state, storage) => {
 		persistState(storage, state);
 		updateChord(ui, state, storage);
 	});
-	ui.historyAdd.addEventListener("click", () => addHistoryItem(storage, ui, state));
-	ui.historyClear.addEventListener("click", () => {
-		state.history = [];
-		persistState(storage, state);
-		renderHistory(ui, state);
-	});
 
 	ui.progressionAdd.forEach((btn) => btn.addEventListener("click", () => addProgressionItem(storage, ui, state)));
 	ui.progressionClear.forEach((btn) =>
@@ -244,15 +227,6 @@ export const bindEvents = (ui, state, storage) => {
 		}),
 	);
 	ui.progressionSave.forEach((btn) => btn.addEventListener("click", () => saveProgression(storage, ui, state)));
-
-	ui.historyButtons.addEventListener("click", (event) => {
-		const button = event.target.closest("button.history-button");
-		if (!button) return;
-		const chord = button.textContent;
-		ui.input.value = chord;
-		state.displaySymbol = null;
-		updateChord(ui, state, storage);
-	});
 
 	ui.progressionHistory.forEach((container) => {
 		bindRemoveHandler(container, (index) => {
