@@ -19,6 +19,14 @@ import {
 } from "./renderer.js";
 import { Chord } from "tonal";
 
+const debounce = (fn, delay) => {
+	let timeoutId;
+	return (...args) => {
+		clearTimeout(timeoutId);
+		timeoutId = setTimeout(() => fn(...args), delay);
+	};
+};
+
 const moveToggleSlider = (slider, activeButton) => {
 	if (!slider || !activeButton) return;
 	const container = activeButton.parentElement;
@@ -143,7 +151,17 @@ const saveProgression = (storage, ui, state) => {
 	renderProgression(ui, state, storage);
 };
 
-const bindRemoveHandler = (container, onRemove) => {
+const loadProgression = (storage, ui, state, index) => {
+	const progression = state.progressionHistory[index];
+	if (!progression) {
+		return;
+	}
+	state.progression = [...progression];
+	persistState(storage, state);
+	renderProgression(ui, state, storage);
+};
+
+const bindHistoryActions = (container, storage, ui, state) => {
 	container.addEventListener("click", (event) => {
 		const button = event.target.closest("button[data-index]");
 		if (!button) {
@@ -153,7 +171,14 @@ const bindRemoveHandler = (container, onRemove) => {
 		if (Number.isNaN(index)) {
 			return;
 		}
-		onRemove(index);
+		const action = button.dataset.action;
+		if (action === "load") {
+			loadProgression(storage, ui, state, index);
+		} else if (action === "remove") {
+			state.progressionHistory.splice(index, 1);
+			persistState(storage, state);
+			renderProgression(ui, state, storage);
+		}
 	});
 };
 
@@ -181,12 +206,13 @@ const toggleSidebar = (ui) => {
 };
 
 export const bindEvents = (ui, state, storage) => {
-	ui.input.addEventListener("input", () => updateChord(ui, state, storage));
+	const debouncedUpdateChord = debounce(() => updateChord(ui, state, storage), 120);
+	ui.input.addEventListener("input", () => debouncedUpdateChord());
 	ui.keyRoot.addEventListener("change", () => {
 		state.keyRoot = ui.keyRoot.value;
 		state.displaySymbol = null;
 		persistState(storage, state);
-		updateChord(ui, state, storage);
+		debouncedUpdateChord();
 		renderProgression(ui, state, storage);
 	});
 	ui.modeMajor.addEventListener("click", () => {
@@ -198,7 +224,7 @@ export const bindEvents = (ui, state, storage) => {
 		setModeToggle(ui, state.keyMode);
 		populateRootSelect(ui, state, state.keyMode);
 		persistState(storage, state);
-		updateChord(ui, state, storage);
+		debouncedUpdateChord();
 		renderProgression(ui, state, storage);
 	});
 	ui.modeMinor.addEventListener("click", () => {
@@ -210,7 +236,7 @@ export const bindEvents = (ui, state, storage) => {
 		setModeToggle(ui, state.keyMode);
 		populateRootSelect(ui, state, state.keyMode);
 		persistState(storage, state);
-		updateChord(ui, state, storage);
+		debouncedUpdateChord();
 		renderProgression(ui, state, storage);
 	});
 	ui.modeChord.addEventListener("click", () => {
@@ -220,7 +246,7 @@ export const bindEvents = (ui, state, storage) => {
 		state.inputMode = "chord";
 		setInputModeToggle(ui, "chord");
 		persistState(storage, state);
-		updateChord(ui, state, storage);
+		debouncedUpdateChord();
 	});
 	ui.modeNotes.addEventListener("click", () => {
 		if (state.inputMode === "notes") {
@@ -229,7 +255,7 @@ export const bindEvents = (ui, state, storage) => {
 		state.inputMode = "notes";
 		setInputModeToggle(ui, "notes");
 		persistState(storage, state);
-		updateChord(ui, state, storage);
+		debouncedUpdateChord();
 	});
 
 	ui.progressionAdd.forEach((btn) => btn.addEventListener("click", () => addProgressionItem(storage, ui, state)));
@@ -243,11 +269,7 @@ export const bindEvents = (ui, state, storage) => {
 	ui.progressionSave.forEach((btn) => btn.addEventListener("click", () => saveProgression(storage, ui, state)));
 
 	ui.progressionHistory.forEach((container) => {
-		bindRemoveHandler(container, (index) => {
-			state.progressionHistory.splice(index, 1);
-			persistState(storage, state);
-			renderProgression(ui, state, storage);
-		});
+		bindHistoryActions(container, storage, ui, state);
 	});
 
 	ui.fabOpenProgression?.addEventListener("click", () => toggleSidebar(ui));

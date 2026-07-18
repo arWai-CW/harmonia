@@ -34,7 +34,33 @@ export const createState = (storage) => ({
 	displaySymbol: null,
 });
 
+let pendingPersistTimeout = null;
+let pendingState = null;
+
+const flushPersist = () => {
+	if (!pendingState) return;
+	const { storage, state } = pendingState;
+	pendingState = null;
+	storage.save(STORAGE_KEYS.PROGRESSION, state.progression);
+	storage.save(STORAGE_KEYS.PROGRESSION_HISTORY, state.progressionHistory);
+	storage.save(STORAGE_KEYS.KEY_ROOT, state.keyRoot);
+	storage.save(STORAGE_KEYS.KEY_MODE, state.keyMode);
+};
+
 export const persistState = (storage, state) => {
+	pendingState = { storage, state };
+	if (pendingPersistTimeout) {
+		clearTimeout(pendingPersistTimeout);
+	}
+	pendingPersistTimeout = setTimeout(flushPersist, 150);
+};
+
+export const persistStateImmediate = (storage, state) => {
+	if (pendingPersistTimeout) {
+		clearTimeout(pendingPersistTimeout);
+		pendingPersistTimeout = null;
+	}
+	pendingState = null;
 	storage.save(STORAGE_KEYS.PROGRESSION, state.progression);
 	storage.save(STORAGE_KEYS.PROGRESSION_HISTORY, state.progressionHistory);
 	storage.save(STORAGE_KEYS.KEY_ROOT, state.keyRoot);

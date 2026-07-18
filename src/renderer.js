@@ -10,6 +10,27 @@ import {
 import { analyzeChordFunction } from "./chord-function.js";
 import { persistState } from "./state.js";
 
+const debounce = (fn, delay) => {
+	let timeoutId;
+	return (...args) => {
+		clearTimeout(timeoutId);
+		timeoutId = setTimeout(() => fn(...args), delay);
+	};
+};
+
+let pendingAbcState = null;
+
+const renderAbcDebounced = debounce(() => {
+	if (!pendingAbcState) return;
+	const { notesWithOctave, keyRoot, keyMode } = pendingAbcState;
+	pendingAbcState = null;
+
+	const abcSyntax = buildAbcChord(notesWithOctave);
+	const abcKey = toAbcKey(keyRoot, keyMode);
+	const abcText = `X:1\nK:${abcKey}\n${abcSyntax}`;
+	abcjs.renderAbc("paper", abcText);
+}, 300);
+
 // 和弦功能推薦：根據當前功能推薦下一個功能
 const FUNCTION_RECOMMENDATIONS = {
 	tonic: "subdominant",
@@ -60,11 +81,13 @@ const getRecommendedChords = (lastChord, keyDefinition) => {
 	if (!nextFunction) return [];
 
 	const degrees = FUNCTION_SCALE_DEGREES[nextFunction];
-	return degrees.map((degree) => ({
-		chord: getChordForDegree(degree, keyDefinition),
-		roman: getRomanForDegree(degree, keyDefinition.mode),
-		function: nextFunction,
-	})).filter((item) => item.chord);
+	return degrees
+		.map((degree) => ({
+			chord: getChordForDegree(degree, keyDefinition),
+			roman: getRomanForDegree(degree, keyDefinition.mode),
+			function: nextFunction,
+		}))
+		.filter((item) => item.chord);
 };
 
 const renderEmptyState = (container, message) => {
@@ -200,7 +223,7 @@ export const renderProgression = (ui, state, storage) => {
 		container.innerHTML = "";
 		state.progressionHistory.forEach((progression, index) => {
 			const row = document.createElement("div");
-			row.className = "list-item list-item--stack";
+			row.className = "list-item";
 			row.dataset.index = String(index);
 
 			const handle = document.createElement("span");
@@ -212,27 +235,62 @@ export const renderProgression = (ui, state, storage) => {
 				</svg>
 			`;
 
-			const progressionWithFunctions = progression.map((chord) => {
-				const chordFunction = analyzeChordFunction(chord, keyDefinition);
-				if (chordFunction && chordFunction.roman) {
-					return `${chord} (${chordFunction.roman})`;
+			const text = document.createElement("div");
+			text.className = "list-item-text";
+
+			progression.forEach((chord, i) => {
+				if (i > 0) {
+					const arrow = document.createElement("span");
+					arrow.className = "text-ink/40 mx-1";
+					arrow.textContent = "→";
+					text.appendChild(arrow);
 				}
-				return chord;
+				const chordFunction = analyzeChordFunction(chord, keyDefinition);
+				const chip = document.createElement("span");
+				chip.className = "chip chip--light";
+				if (chordFunction?.color) {
+					chip.classList.add(`chip--${chordFunction.color}`);
+				}
+				chip.textContent = chord;
+				text.appendChild(chip);
 			});
 
-			const text = document.createElement("span");
-			text.className = "list-item-text";
-			text.textContent = progressionWithFunctions.join(" → ");
+			const actions = document.createElement("div");
+			actions.className = "list-item-actions";
+
+			const load = document.createElement("button");
+			load.className = "icon-button icon-button--icon";
+			load.type = "button";
+			load.dataset.index = String(index);
+			load.dataset.action = "load";
+			load.title = "載入";
+			load.innerHTML = `
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+					<polyline points="7 10 12 15 17 10"></polyline>
+					<line x1="12" y1="15" x2="12" y2="3"></line>
+				</svg>
+			`;
 
 			const remove = document.createElement("button");
-			remove.className = "icon-button";
+			remove.className = "icon-button icon-button--icon";
 			remove.type = "button";
 			remove.dataset.index = String(index);
-			remove.textContent = "移除";
+			remove.dataset.action = "remove";
+			remove.title = "移除";
+			remove.innerHTML = `
+				<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<line x1="18" y1="6" x2="6" y2="18"></line>
+					<line x1="6" y1="6" x2="18" y2="18"></line>
+				</svg>
+			`;
+
+			actions.appendChild(load);
+			actions.appendChild(remove);
 
 			row.appendChild(handle);
 			row.appendChild(text);
-			row.appendChild(remove);
+			row.appendChild(actions);
 			container.appendChild(row);
 		});
 	});
@@ -369,9 +427,11 @@ export const renderChord = (ui, state, chordResult) => {
 	}
 
 	if (chordResult.notesWithOctave.length) {
-		const abcSyntax = buildAbcChord(chordResult.notesWithOctave);
-		const abcKey = toAbcKey(state.keyRoot, state.keyMode);
-		const abcText = `X:1\nK:${abcKey}\n${abcSyntax}`;
-		abcjs.renderAbc("paper", abcText);
+		pendingAbcState = {
+			notesWithOctave: chordResult.notesWithOctave,
+			keyRoot: state.keyRoot,
+			keyMode: state.keyMode,
+		};
+		renderAbcDebounced();
 	}
 };
