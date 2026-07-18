@@ -458,16 +458,27 @@
 			inset 0 -1px 1px rgba(255, 255, 255, 0.25);
 	}
 
-	.list-stack {
-		@apply space-y-3;
-	}
-
 	.list-item {
-		@apply flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/80 px-4 py-3 text-sm text-ink/80 shadow-[0_12px_25px_rgba(15,23,42,0.06)];
+		display: grid !important;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: 0.75rem;
+		border-radius: 1rem;
+		border: 1px solid hsla(0, 0%, 80%, 0.5);
+		background: rgba(255, 255, 255, 0.8);
+		padding: 0.75rem 1rem;
+		margin-bottom: 0.5rem;
+		font-size: 0.875rem;
+		color: rgba(27, 29, 32, 0.8);
+		box-shadow: 0 12px 25px rgba(15, 23, 42, 0.06);
 	}
 
-	.list-item--stack {
-		@apply flex-col items-start;
+	.list-item-text {
+		@apply min-w-0 flex flex-wrap items-center gap-x-1 gap-y-1;
+	}
+
+	.list-item-actions {
+		@apply flex items-center gap-1;
 	}
 
 	.history-button {
@@ -476,6 +487,10 @@
 
 	.icon-button {
 		@apply rounded-full border border-ink/10 bg-transparent px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-ink/55 transition hover:border-ink/20 hover:text-ink focus:outline-none focus:ring-2 focus:ring-ink/20 focus:ring-offset-2 focus:ring-offset-white/50;
+	}
+
+	.icon-button--icon {
+		@apply shrink-0 p-1.5;
 	}
 
 	.chip-stack {
@@ -496,6 +511,22 @@
 
 	.chip--red {
 		@apply bg-red-500/15 ring-1 ring-red-500/30 text-red-700/90;
+	}
+
+	.chip--light {
+		@apply flex items-center px-1.5 py-0.5 text-[11px] leading-tight;
+	}
+
+	.chip--light.chip--green {
+		@apply bg-green-500/10 text-green-700/80;
+	}
+
+	.chip--light.chip--blue {
+		@apply bg-blue-500/10 text-blue-700/80;
+	}
+
+	.chip--light.chip--red {
+		@apply bg-red-500/10 text-red-700/80;
 	}
 
 	/* 借用和弦 - 虛線邊框 */
@@ -545,15 +576,7 @@
 	}
 
 	.drag-handle--list {
-		@apply absolute right-4 top-4 w-6 h-6 text-ink/20 hover:text-ink/40;
-	}
-
-	.list-item--stack {
-		@apply flex-col items-start relative;
-	}
-
-	.list-item-text {
-		@apply pr-8;
+		@apply shrink-0 w-6 h-6 text-ink/20 hover:text-ink/40;
 	}
 
 	.drag-ghost {
