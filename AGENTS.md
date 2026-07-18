@@ -14,7 +14,11 @@
 harmonia/
 ├── src/                    # Frontend source (Vite root)
 │   ├── index.html          # Main HTML with embedded modal logic
-│   ├── main.js             # Application entry point & state management
+│   ├── main.js             # Application entry point (thin initializer)
+│   ├── state.js            # State management & localStorage persistence
+│   ├── renderer.js         # DOM rendering & ABC notation display
+│   ├── events.js           # Event binding & input handling
+│   ├── window-manager.js   # Floating window drag/resize & state persistence
 │   ├── styles.css          # Tailwind CSS v4 with custom components
 │   ├── chord-utils.js      # Music theory utilities (chord parsing, key definitions)
 │   ├── chord-function.js   # Harmonic function analysis (Roman numerals)
@@ -39,7 +43,11 @@ harmonia/
 
 - **ES6 Modules**: All JavaScript files use `import`/`export` syntax
 - **Separation of Concerns**:
-    - `main.js`: App orchestration, state management, UI rendering
+    - `main.js`: Thin initialization layer, coordinates modules
+    - `state.js`: State management & localStorage persistence
+    - `renderer.js`: DOM rendering & ABC notation display
+    - `events.js`: Event binding, input handling & business logic
+    - `window-manager.js`: Floating window drag/resize & state persistence
     - `chord-utils.js`: Pure music theory utilities (no side effects)
     - `chord-function.js`: Harmonic analysis logic
     - `drag-utils.js`: UI interaction wrapper
@@ -159,7 +167,7 @@ harmonia/
 ### State Management Pattern
 
 ```javascript
-// Factory pattern for storage abstraction
+// Factory pattern for storage abstraction (state.js)
 const createStorage = (backend) => ({
 	load(key, fallback) {
 		try {
@@ -174,7 +182,7 @@ const createStorage = (backend) => ({
 	},
 });
 
-// Centralized state container
+// Centralized state container (state.js)
 const createState = (storage) => ({
 	currentChord: null,
 	history: storage.load(STORAGE_KEYS.HISTORY, []),
@@ -314,6 +322,15 @@ const createState = (storage) => ({
 - `createStorage()` abstracts localStorage
 - `createState()` centralizes application state
 - Easy to swap storage backends if needed
+
+### 6. Module Decomposition
+
+- `main.js` is a thin initializer (~80 lines)
+- `state.js` owns state transitions and persistence
+- `renderer.js` owns DOM rendering
+- `events.js` owns event binding and business logic
+- `window-manager.js` owns floating window behavior
+- Clear dependency graph: main → events → renderer → chord-utils
 
 ---
 
