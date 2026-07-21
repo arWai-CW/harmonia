@@ -20,7 +20,7 @@
 						<h1 class="text-3xl font-semibold tracking-tight text-ink sm:text-4xl">Harmonia</h1>
 						<p class="text-base text-ink/65 sm:text-lg" data-i18n="header.subtitle">拆解 組成音 與 和弦</p>
 					</div>
-					<div class="flex flex-col items-start sm:items-end gap-2 w-full">
+					<div class="flex flex-col items-start sm:items-end gap-2 w-full sm:w-auto">
 						<div class="flex items-center gap-1.5">
 							<svg
 								class="w-3.5 h-3.5 text-ink/50 shrink-0"
@@ -40,7 +40,7 @@
 							<div class="relative">
 								<select
 									id="lang-select"
-									class="input-field !py-1 !px-2 sm:!px-2 !text-xs appearance-none pr-9 sm:pr-7 w-auto sm:w-24 min-w-[100px]"
+									class="input-field !py-1 !px-2 sm:!px-2 !text-xs appearance-none pr-9 sm:pr-7 w-auto sm:w-20 min-w-[100px]"
 								>
 									<option value="zh-TW">繁體中文</option>
 									<option value="zh-CN">简体中文</option>
@@ -50,7 +50,7 @@
 								<span class="select-arrow text-xs right-2 sm:right-2">▾</span>
 							</div>
 						</div>
-						<div class="flex flex-wrap items-center gap-2 w-full">
+						<div class="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
 							<label
 								class="text-xs font-medium text-ink/50 whitespace-nowrap"
 								for="key-root"
@@ -60,11 +60,11 @@
 							<div class="relative flex-1 sm:flex-none min-w-0">
 								<select
 									id="key-root"
-									class="input-field !py-2 !px-2 sm:!px-3 !text-sm appearance-none pr-9 sm:pr-10 w-full sm:w-28"
+									class="input-field !py-2 !px-2 sm:!px-3 !text-sm appearance-none pr-9 sm:pr-10 w-full sm:w-16"
 								></select>
 								<span class="select-arrow text-xs right-2 sm:right-4">▾</span>
 							</div>
-							<div class="mode-toggle !p-0.5 !rounded-xl flex-shrink-0" role="group" aria-label="Mode">
+							<div class="mode-toggle !p-0.5 !rounded-xl sm:flex-shrink sm:min-w-[80px]" role="group" aria-label="Mode">
 								<span class="toggle-slider !rounded-xl"></span>
 								<button
 									id="mode-major"
