@@ -17,6 +17,7 @@
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.18",
+		"@tonejs/midi": "^2.0.28",
 		"abcjs": "^6.6.1",
 		"sortablejs": "^1.15.6",
 		"tailwindcss": "^4.1.18",

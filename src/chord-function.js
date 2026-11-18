@@ -6,66 +6,124 @@ import { getKeyDefinition } from "./chord-utils.js";
  * 支援調內和弦和借用和弦（Borrowed Chords）分析
  * 借用和弦：從平行調借用的和弦，如 C Major 中借用 C minor 的 iv、bVI、bIII
  */
-export const analyzeChordFunction = (chordSymbol, keyDefinition) => {
-  if (!chordSymbol || !keyDefinition) {
-    return null;
-  }
+export const analyzeChordFunction = (chordSymbol, keyDefinition, intervals) => {
+	if (!chordSymbol || !keyDefinition) {
+		return null;
+	}
 
-  const chordRoot = extractChordRoot(chordSymbol);
-  if (!chordRoot) {
-    return null;
-  }
+	const chordRoot = extractChordRoot(chordSymbol);
+	if (!chordRoot) {
+		return null;
+	}
 
-  const scaleDegree = getScaleDegree(chordRoot, keyDefinition);
+	const scaleDegree = getScaleDegree(chordRoot, keyDefinition);
+	const quality = getCoreQuality(intervals);
 
-  // 如果是屬七和弦且不是 V 級，檢測是否為副屬和弦
-  const chordData = Chord.get(chordSymbol);
-  const isDominant7th = chordData.type === 'dominant' ||
-                        (chordSymbol.includes('7') && !chordSymbol.match(/maj7|m7|dim7|ø/i));
-  
-  if (isDominant7th && scaleDegree !== 5) {
-    const secondaryDominant = detectSecondaryDominant(chordSymbol, chordRoot, keyDefinition);
-    if (secondaryDominant) {
-      return secondaryDominant;
-    }
-  }
+	// 如果是屬七和弦且不是 V 級，檢測是否為副屬和弦
+	const isDominant7th = quality?.seventh === "dominant7" ||
+		(!quality && (Chord.get(chordSymbol).type === 'dominant' ||
+			(chordSymbol.includes('7') && !chordSymbol.match(/maj7|m7|dim7|ø/i))));
 
-  // 調內和弦：正常分析
-  if (scaleDegree !== null) {
-    const romanNumeral = generateRomanNumeral(scaleDegree, keyDefinition.mode);
-    const { function: harmonicFunction, color } = getHarmonicFunction(scaleDegree, keyDefinition.mode);
+	if (isDominant7th && scaleDegree !== 5) {
+		const secondaryDominant = detectSecondaryDominant(chordSymbol, chordRoot, keyDefinition, intervals);
+		if (secondaryDominant) {
+			return secondaryDominant;
+		}
+	}
 
-    return {
-      function: harmonicFunction,
-      roman: romanNumeral,
-      color: color,
-      scaleDegree: scaleDegree,
-      chordRoot: chordRoot
-    };
-  }
+	// 調內和弦：正常分析
+	if (scaleDegree !== null) {
+		// Q: why only major?  Minor keys mix natural/harmonic scales, so a strict
+		// quality check would mark common V7 and vii° chords as out of key.
+		if (quality && keyDefinition.mode === "major" && !matchesDiatonicQuality(quality, scaleDegree)) {
+			const borrowedChord = detectBorrowedChord(chordRoot, keyDefinition, quality, true);
+			if (borrowedChord) {
+				return {
+					function: 'borrowed',
+					roman: borrowedChord.roman,
+					color: borrowedChord.color,
+					scaleDegree: borrowedChord.scaleDegree,
+					chordRoot: chordRoot,
+					borrowedFrom: borrowedChord.borrowedFrom,
+					description: borrowedChord.description
+				};
+			}
+			return null;
+		}
 
-  // 非調內和弦：檢測是否為借用和弦
-  const borrowedChord = detectBorrowedChord(chordRoot, keyDefinition);
-  if (borrowedChord) {
-    return {
-      function: 'borrowed',
-      roman: borrowedChord.roman,
-      color: borrowedChord.color,
-      scaleDegree: borrowedChord.scaleDegree,
-      chordRoot: chordRoot,
-      borrowedFrom: borrowedChord.borrowedFrom,
-      description: borrowedChord.description
-    };
-  }
+		const romanNumeral = generateRomanNumeral(scaleDegree, keyDefinition.mode);
+		const { function: harmonicFunction, color } = getHarmonicFunction(scaleDegree, keyDefinition.mode);
 
-  return null;
+		return {
+			function: harmonicFunction,
+			roman: romanNumeral,
+			color: color,
+			scaleDegree: scaleDegree,
+			chordRoot: chordRoot
+		};
+	}
+
+	// 非調內和弦：檢測是否為借用和弦
+	const borrowedChord = detectBorrowedChord(chordRoot, keyDefinition, quality);
+	if (borrowedChord) {
+		return {
+			function: 'borrowed',
+			roman: borrowedChord.roman,
+			color: borrowedChord.color,
+			scaleDegree: borrowedChord.scaleDegree,
+			chordRoot: chordRoot,
+			borrowedFrom: borrowedChord.borrowedFrom,
+			description: borrowedChord.description
+		};
+	}
+
+	return null;
+};
+
+/**
+ * 從和弦音程取出三度、五度、七度的核心性質。
+ * 回傳 null 代表沒有三度（sus、power chord），此時不做調內性質比對。
+ */
+const getCoreQuality = (intervals) => {
+	if (!Array.isArray(intervals) || !intervals.length) return null;
+	const has = (interval) => intervals.includes(interval);
+	const third = has("3M") ? "major" : has("3m") ? "minor" : null;
+	if (!third) return null;
+
+	let seventh = null;
+	if (has("7M")) seventh = "major7";
+	else if (has("7d")) seventh = "dim7";
+	else if (has("7m")) {
+		if (third === "major") seventh = "dominant7";
+		else if (has("5d")) seventh = "half-diminished";
+		else seventh = "minor7";
+	}
+
+	let triad = third;
+	if (third === "major" && has("5A")) triad = "aug";
+	if (third === "minor" && has("5d")) triad = "dim";
+
+	return { triad, seventh };
+};
+
+const MAJOR_TRIAD_QUALITIES = ["major", "minor", "minor", "major", "major", "minor", "dim"];
+const MAJOR_SEVENTH_QUALITIES = ["major7", "minor7", "minor7", "major7", "dominant7", "minor7", "half-diminished"];
+
+const matchesDiatonicQuality = (quality, scaleDegree) => {
+	const index = scaleDegree - 1;
+	if (quality.seventh) {
+		if (quality.seventh === MAJOR_SEVENTH_QUALITIES[index]) return true;
+		// vii°7 comes from harmonic minor but functions as the leading-tone chord.
+		return index === 6 && quality.seventh === "dim7";
+	}
+	return quality.triad === MAJOR_TRIAD_QUALITIES[index];
 };
 
 /**
  * 檢測借用和弦
  * 目前支援從平行小調借用（Major Mode Borrowing）
  */
-const detectBorrowedChord = (chordRoot, keyDefinition) => {
+const detectBorrowedChord = (chordRoot, keyDefinition, quality, allowSameRoot = false) => {
   if (keyDefinition.mode !== 'major') {
     return null;
   }
@@ -85,9 +143,10 @@ const detectBorrowedChord = (chordRoot, keyDefinition) => {
     return null;
   }
 
+  const rootChroma = rootInfo.chroma;
   const degreeIndex = parallelMinorScale.findIndex(scaleNote => {
     const scaleNoteInfo = Note.get(scaleNote);
-    return scaleNoteInfo.pc === rootInfo.pc;
+    return scaleNoteInfo.chroma === rootChroma;
   });
 
   if (degreeIndex === -1) {
@@ -101,12 +160,21 @@ const detectBorrowedChord = (chordRoot, keyDefinition) => {
   const majorScale = keyDefinition.scale;
   const isDifferentInMinor = isNoteDifferentInParallelMinor(chordRoot, majorScale, parallelMinorScale);
 
-  if (!isDifferentInMinor) {
+  if (!isDifferentInMinor && !allowSameRoot) {
     return null;
   }
 
   // 生成借用和弦的羅馬數字標記
-  return generateBorrowedRomanNumeral(scaleDegree);
+  const mapping = generateBorrowedRomanNumeral(scaleDegree);
+  if (!mapping) {
+    return null;
+  }
+
+  if (quality && mapping.third !== quality.triad) {
+    return null;
+  }
+
+  return mapping;
 };
 
 /**
@@ -114,11 +182,13 @@ const detectBorrowedChord = (chordRoot, keyDefinition) => {
  * 副屬和弦是臨時以其他音級為屬和弦的和弦，標記為 V/x
  * 例如：V/V 是「屬和弦的屬和弦」，指向 V 級
  */
-const detectSecondaryDominant = (chordSymbol, chordRoot, keyDefinition) => {
+const detectSecondaryDominant = (chordSymbol, chordRoot, keyDefinition, intervals) => {
   // 1. 檢測是否為屬七和弦（dominant 7th）
   const chordData = Chord.get(chordSymbol);
-  const isDominant7th = chordData.type === 'dominant' || 
-                        (chordSymbol.includes('7') && !chordSymbol.match(/maj7|m7|dim7|ø/i));
+  const isDominant7th = Array.isArray(intervals) && intervals.length
+    ? intervals.includes('3M') && intervals.includes('7m')
+    : chordData.type === 'dominant' ||
+      (chordSymbol.includes('7') && !chordSymbol.match(/maj7|m7|dim7|ø/i));
   
   if (!isDominant7th) {
     return null;
@@ -192,10 +262,10 @@ const isNoteDifferentInParallelMinor = (note, majorScale, minorScale) => {
 const generateBorrowedRomanNumeral = (scaleDegree) => {
   // 借用和弦的映射表
   const borrowedMap = {
-    3: { roman: 'bIII', color: 'green', description: '平行小調借用 - 降三級大和弦' },
-    6: { roman: 'bVI', color: 'blue', description: '平行小調借用 - 降六級大和弦' },
-    7: { roman: 'bVII', color: 'red', description: '平行小調借用 - 降七級大和弦' },
-    4: { roman: 'iv', color: 'blue', description: '平行小調借用 - 四級小和弦' }
+    3: { roman: 'bIII', color: 'green', third: 'major', description: '平行小調借用 - 降三級大和弦' },
+    6: { roman: 'bVI', color: 'blue', third: 'major', description: '平行小調借用 - 降六級大和弦' },
+    7: { roman: 'bVII', color: 'red', third: 'major', description: '平行小調借用 - 降七級大和弦' },
+    4: { roman: 'iv', color: 'blue', third: 'minor', description: '平行小調借用 - 四級小和弦' }
   };
 
   const mapping = borrowedMap[scaleDegree];
@@ -206,6 +276,7 @@ const generateBorrowedRomanNumeral = (scaleDegree) => {
   return {
     roman: mapping.roman,
     color: mapping.color,
+    third: mapping.third,
     scaleDegree: scaleDegree,
     borrowedFrom: 'minor',
     description: mapping.description
@@ -229,7 +300,7 @@ const extractChordRoot = (chordSymbol) => {
     return null;
   }
 
-  return root.toUpperCase();
+  return root[0].toUpperCase() + root.slice(1);
 };
 
 const getScaleDegree = (note, keyDefinition) => {
@@ -242,10 +313,10 @@ const getScaleDegree = (note, keyDefinition) => {
     return null;
   }
 
-  const normalizedNote = noteInfo.pc;
+  const normalizedNote = noteInfo.chroma;
   const degreeIndex = keyDefinition.scale.findIndex(scaleNote => {
     const scaleNoteInfo = Note.get(scaleNote);
-    return scaleNoteInfo.pc === normalizedNote;
+    return scaleNoteInfo.chroma === normalizedNote;
   });
 
   if (degreeIndex === -1) {

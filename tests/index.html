@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-Hant">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -52,8 +52,14 @@
 		</div>
 		<script type="module">
 			import { runChordUtilsTests } from "./chord-utils.test.js";
+			import { runChordFunctionTests } from "./chord-function.test.js";
+			import { runMidiUtilsTests } from "./midi-utils.test.js";
 
-			const results = runChordUtilsTests();
+			const results = [
+				...runChordUtilsTests(),
+				...runChordFunctionTests(),
+				...(await runMidiUtilsTests()),
+			];
 			const container = document.getElementById("results");
 
 			results.forEach((result) => {

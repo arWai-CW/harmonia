@@ -94,29 +94,136 @@
 					<p class="text-xs text-ink/45">調性會影響顯示音名（例如 C# major 會顯示 E#）。</p>
 				</div>
 
-				<div class="result-card">
-					<p class="text-sm uppercase tracking-[0.2em] text-ink/45">Result</p>
-					<div id="chordOutput" class="mt-3 text-lg font-medium text-ink/85"></div>
-					<div id="paper" class="mt-6"></div>
+				<div class="app-tabs__list" role="tablist" aria-label="功能">
+					<button id="tab-chord" class="app-tabs__tab" type="button" role="tab" aria-selected="true" tabindex="0">
+						和弦
+					</button>
+					<button id="tab-midi" class="app-tabs__tab" type="button" role="tab" aria-selected="false" tabindex="-1">
+						MIDI
+					</button>
 				</div>
 
-				<div class="result-card space-y-5">
-					<div class="flex items-center justify-between gap-4">
-						<p class="text-sm uppercase tracking-[0.2em] text-ink/45">Progression</p>
-						<div class="flex gap-2">
-							<button id="progression-add" class="pill-button">加入</button>
-							<button id="progression-clear" class="pill-button pill-button--ghost">清空</button>
+				<div id="panel-chord" class="space-y-4" role="tabpanel" aria-labelledby="tab-chord" tabindex="0">
+					<div class="result-card">
+						<p class="text-sm uppercase tracking-[0.2em] text-ink/45">Result</p>
+						<div id="chordOutput" class="mt-3 text-lg font-medium text-ink/85"></div>
+						<div id="paper" class="mt-6"></div>
+					</div>
+
+					<div class="result-card space-y-5">
+						<div class="flex items-center justify-between gap-4">
+							<p class="text-sm uppercase tracking-[0.2em] text-ink/45">Progression</p>
+							<div class="flex gap-2">
+								<button id="progression-add" class="pill-button">加入</button>
+								<button id="progression-clear" class="pill-button pill-button--ghost">清空</button>
+							</div>
 						</div>
+						<div>
+							<p class="text-xs uppercase tracking-[0.2em] text-ink/45">Current</p>
+							<div id="progressionCurrent" class="chip-stack mt-2"></div>
+						</div>
+						<div class="flex items-center justify-between gap-4">
+							<p class="text-xs uppercase tracking-[0.2em] text-ink/45">Saved</p>
+							<button id="progression-save" class="pill-button pill-button--soft">儲存進程</button>
+						</div>
+						<div id="progressionHistory" class="list-stack"></div>
 					</div>
-					<div>
-						<p class="text-xs uppercase tracking-[0.2em] text-ink/45">Current</p>
-						<div id="progressionCurrent" class="chip-stack mt-2"></div>
-					</div>
-					<div class="flex items-center justify-between gap-4">
-						<p class="text-xs uppercase tracking-[0.2em] text-ink/45">Saved</p>
-						<button id="progression-save" class="pill-button pill-button--soft">儲存進程</button>
-					</div>
-					<div id="progressionHistory" class="list-stack"></div>
+				</div>
+
+				<div id="panel-midi" class="midi-panel space-y-4" role="tabpanel" aria-labelledby="tab-midi" tabindex="0" hidden>
+					<section id="midi-workspace" class="midi-workspace" aria-labelledby="midi-heading">
+						<header class="midi-toolbar">
+							<div class="midi-toolbar__intro">
+								<h2 id="midi-heading" class="midi-toolbar__title">MIDI 分析</h2>
+								<p class="midi-toolbar__hint">先看骨架與延伸音，再對照時間軸與音符。</p>
+							</div>
+							<div class="midi-toolbar__actions">
+								<label class="midi-file-button">
+									<input id="midi-file" class="midi-file-input" type="file" accept=".mid,.midi,audio/midi,audio/x-midi" aria-label="選擇 MIDI 檔案" />
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<path d="M12 15V4m0 0L7.5 8.5M12 4l4.5 4.5" />
+										<path d="M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3" />
+									</svg>
+									<span>開啟 MIDI</span>
+								</label>
+							</div>
+						</header>
+
+						<p id="midi-status" class="midi-status" role="status" aria-live="polite">尚未載入 MIDI 檔案。</p>
+
+						<div id="midi-empty" class="midi-empty">
+							<div class="midi-empty__icon" aria-hidden="true">
+								<svg viewBox="0 0 64 40" fill="none">
+									<rect x="1" y="1" width="62" height="38" rx="6" stroke="currentColor" stroke-width="1.5" />
+									<path d="M11 1v38M21 1v38M31 1v38M41 1v38M51 1v38" stroke="currentColor" stroke-width="1.2" opacity=".55" />
+									<rect x="14" y="1" width="6" height="23" rx="1" fill="currentColor" />
+									<rect x="24" y="1" width="6" height="23" rx="1" fill="currentColor" />
+									<rect x="44" y="1" width="6" height="23" rx="1" fill="currentColor" />
+									<rect x="54" y="1" width="6" height="23" rx="1" fill="currentColor" />
+								</svg>
+							</div>
+							<p class="midi-empty__title">把 MIDI 檔拖到這裡</p>
+							<p class="midi-empty__text">支援 .mid 與 .midi。載入後會標出和弦、骨架與延伸音。</p>
+							<button class="pill-button midi-empty__cta" type="button" data-midi-open>選擇檔案</button>
+						</div>
+
+						<div id="midi-view" hidden>
+							<fieldset id="midi-tracks" class="midi-layers" hidden>
+								<legend class="midi-layers__legend">
+									<span>分軌</span>
+									<span class="midi-layers__hint">點擊獨奏 · Shift + 點擊多選</span>
+								</legend>
+								<div id="midi-track-list" class="midi-layers__list"></div>
+							</fieldset>
+
+							<div class="midi-editor">
+								<section id="midi-detail" class="midi-detail" aria-live="polite"></section>
+
+								<div class="midi-transport" role="group" aria-label="MIDI 播放控制">
+									<button id="midi-play" class="midi-transport__button midi-transport__button--play" type="button">
+										<svg class="midi-transport__icon midi-transport__icon--play" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z" /></svg>
+										<svg class="midi-transport__icon midi-transport__icon--pause" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7zM13 5h4v14h-4z" /></svg>
+										<span class="midi-transport__label">播放</span>
+									</button>
+									<button id="midi-stop" class="midi-transport__button midi-transport__button--icon" type="button" aria-label="停止" title="停止">
+										<svg class="midi-transport__icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" /></svg>
+									</button>
+									<span id="midi-time" class="midi-transport__time">0:00 / 0:00</span>
+									<label class="midi-transport__tempo" for="midi-tempo">
+										<span class="midi-transport__tempo-label">速度</span>
+										<input id="midi-tempo" class="midi-transport__range" type="range" min="50" max="150" step="5" value="100" />
+										<output id="midi-tempo-value" class="midi-transport__tempo-value" for="midi-tempo">100%</output>
+									</label>
+								</div>
+
+								<div class="midi-timeline">
+									<div class="midi-timeline__head">
+										<div class="midi-timeline__intro">
+											<span class="midi-timeline__label">和弦時間軸</span>
+											<span class="midi-timeline__hint">點和弦，對照下方音符</span>
+										</div>
+										<div id="midi-zoom" class="midi-zoom" hidden>
+											<span class="midi-zoom__label">縮放</span>
+											<button id="midi-zoom-out" class="midi-zoom__button" type="button" aria-label="縮小時間軸" title="縮小時間軸">−</button>
+											<button id="midi-zoom-in" class="midi-zoom__button" type="button" aria-label="放大時間軸" title="放大時間軸">+</button>
+										</div>
+									</div>
+									<div id="midi-ribbon" class="midi-ribbon">
+										<div id="midi-ribbon-inner" class="midi-ribbon__inner"></div>
+									</div>
+								</div>
+
+								<div class="midi-stage">
+									<div id="midi-axis" class="midi-axis">
+										<div id="midi-axis-inner" class="midi-axis__inner"></div>
+									</div>
+									<div id="midi-roll-scroll" class="midi-roll-scroll">
+										<div id="midi-roll-content" class="midi-roll-content"></div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</section>
 				</div>
 			</section>
 		</main>
