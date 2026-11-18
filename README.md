@@ -1,7 +1,10 @@
-# Harmonia
+<h1 align="center">Harmonia</h1>
+<h3 align="center">Showcase your skills on your GitHub or resumé with ease!</h3>
 
 > Fork from: [不囉唆的和弦代號查詢器 by NiceChord 好和弦](https://github.com/wiwikuan/chordfinder)  
 > Modified by: arWai
+
+[![My Skills](https://skillicons.dev/icons?i=js,html,css,rust)](https://skillicons.dev)
 
 ---
 
