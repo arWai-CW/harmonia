@@ -1563,10 +1563,11 @@ export const createMidiPanel = (state, storage) => {
 	});
 	const seek = async (event) => {
 		if (!state.midi || event.target.closest("[data-note-id]")) return;
-		if (event.detail === 0 && event.target.closest("button[data-segment-id]")) return;
+		const button = event.target.closest("button[data-segment-id]");
+		const segment = event.detail === 0 ? state.midi.segments.find((candidate) => candidate.id === button?.dataset.segmentId) : null;
 		const playing = state.midiPlayback.playing;
 		const bar = event.target.closest(".midi-ruler__bar");
-		const time = bar ? Number(bar.dataset.time) : timeAtX(event.clientX - ui.midiRollScroll.getBoundingClientRect().left, ui.midiRollScroll.scrollLeft, state.midiPixelsPerSecond, getMidiDuration(state), MIDI_PADDING);
+		const time = segment?.startTime ?? (bar ? Number(bar.dataset.time) : timeAtX(event.clientX - ui.midiRollScroll.getBoundingClientRect().left, ui.midiRollScroll.scrollLeft, state.midiPixelsPerSecond, getMidiDuration(state), MIDI_PADDING));
 		pauseMidiPlayback(ui, state);
 		state.midiPlayback.offset = time;
 		syncMidiPlayhead(ui, state);
