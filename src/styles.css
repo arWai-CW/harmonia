@@ -1175,6 +1175,10 @@
 	.midi-chord--compact .midi-chord__roman {
 		display: none;
 	}
+	.midi-chord.has-preview .midi-chord__roman {
+		display: block;
+		opacity: 0.9;
+	}
 
 	.midi-chord--widened {
 		border-right-style: dashed;
