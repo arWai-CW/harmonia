@@ -162,7 +162,7 @@ export async function runMidiUtilsTests() {
 			assertEqual(view.segments[0].chord.symbol, "C", "named broken chord");
 			assertEqual(view.segments[0].pitchClasses.length, 3, "three pitch classes");
 		}),
-		await test("斷奏分解和弦可以命名", async () => {
+		await test("單音旋律不會被標成分解和弦", async () => {
 			const midi = new Midi();
 			midi.header.setTempo(120);
 			const track = midi.addTrack();
@@ -170,7 +170,7 @@ export async function runMidiUtilsTests() {
 				track.addNote({ midi: midiNote, time: index * 0.5, duration: 0.4 });
 			});
 			const view = await parseMidiFile(createFile("melody.mid", midi.toArray()), KEY);
-			assert(view.segments.every((segment) => segment.arpeggio && segment.chord), "staccato broken chords are named");
+			assertEqual(view.segments.length, 0, "no segments");
 		}),
 		await test("基礎三和弦從和弦音取得", async () => {
 			const view = await parseMidiFile(createMidiFile([[60, 63, 67, 70, 74]]), KEY);

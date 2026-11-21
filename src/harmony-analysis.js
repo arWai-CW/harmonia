@@ -136,6 +136,12 @@ export function nameArpeggioChords(notes, chordSegments, bars, barDuration, ppq,
 		const start = bars[b].time, end = bars[b + 1]?.time ?? start + barDuration;
 		const pool = notes.filter((n) => n.startTime < end && n.endTime > start && !chordSegments.some((s) => n.startTime >= s.startTime && n.startTime < s.endTime));
 		if (new Set(pool.map((n) => mod(n.midi))).size < 3) continue;
+		const line = [...pool].sort((a, c) => a.startTime - c.startTime || a.midi - c.midi);
+		const transitions = line.slice(1).map((note, i) => ({
+			step: Math.abs(note.midi - line[i].midi) <= 2,
+			single: note.startTime > line[i].startTime && note.startTime >= line[i].endTime - 0.05,
+		}));
+		if (transitions.filter((t) => t.single).length / transitions.length >= 0.7 && transitions.filter((t) => t.step).length / transitions.length > 0.5) continue;
 		const beats = bars[b + 1] ? (bars[b + 1].tick - bars[b].tick) / ppq : (b ? (bars[b].tick - bars[b - 1].tick) / ppq : 4);
 		const beatDuration = (end - start) / beats;
 		const context = Array(12).fill(0);

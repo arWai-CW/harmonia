@@ -10,6 +10,11 @@ const test = (name, fn) => {
 
 export function runHarmonyAnalysisTests() {
 	return [
+		...[[60, 62, 64, 65], [65, 64, 62, 60], [60, 62, 64, 65, 72], [60, 62, 60, 62]].map((pitches) => test(`Stepwise single line stays unlabelled: ${pitches.join(" ")}`, () => {
+			const notes = pitches.map((midi, i) => ({ id: `n${i}`, midi, trackIndex: 0, startTime: i * 2 / pitches.length, endTime: (i + 0.8) * 2 / pitches.length, startTick: i * 1920 / pitches.length, endTick: (i + 0.8) * 1920 / pitches.length }));
+			const found = nameArpeggioChords(notes, [], [{ index: 1, time: 0, tick: 0 }], 2, 480, getKeyDefinition("C", "major"));
+			assert(found.length === 0, JSON.stringify(found.map((s) => s.chord.symbol)));
+		})),
 		...[{ pitches: [[60, 64, 67, 64]], expected: ["C"], held: true }, { pitches: [[57, 60, 64, 67]], expected: ["Am7"] }, { pitches: [[62, 65, 69, 72], [55, 59, 62, 65]], expected: ["Dm7", "G7"] }, { pitches: [[60, 64, 65, 67, 64]], expected: ["C"] }].map((fixture) => test(`Broken chord ${fixture.expected.join(" / ")}`, () => {
 			const notes = fixture.pitches.flatMap((pitches, bar) => pitches.map((midi, i) => ({ id: `${bar}:${i}`, midi, trackIndex: 0, startTime: bar * 2 + i * 2 / pitches.length, endTime: fixture.held ? bar * 2 + 2 : bar * 2 + (i + 0.7) * 2 / pitches.length, startTick: bar * 1920 + i * 1920 / pitches.length, endTick: (bar + 1) * 1920 })));
 			const bars = fixture.pitches.map((_, i) => ({ index: i + 1, time: i * 2, tick: i * 1920 }));
