@@ -1,0 +1,160 @@
+{
+  "header": {
+    "subtitle": "拆解 組成音 與 和弦"
+  },
+  "key": {
+    "label": "歌曲調性"
+  },
+  "chord": {
+    "label": "和弦代號",
+    "placeholder": "例如：Cmaj7、F#m7b5、Bb13",
+    "notesPlaceholder": "例如：C E G、D F# A",
+    "empty": "輸入和弦代號以查看結果。",
+    "notFound": "找不到對應的和弦，請確認代號是否正確。",
+    "notFoundNotes": "找不到對應的和弦，請確認音符是否正確。",
+    "notesLabel": "組成音：",
+    "notInKey": "非調內和弦",
+    "detected": "從音符推測和弦 ({{count}} 個可能):",
+    "more": "還有 {{count}} 個其他可能...",
+    "enharmonicTip": "提示：{{current}} 在此調性中通常記為 {{preferred}}",
+    "useInstead": "改用 {{preferred}}"
+  },
+  "inputMode": {
+    "chord": "和弦",
+    "notes": "組成音"
+  },
+  "progression": {
+    "title": "Progression",
+    "add": "加入",
+    "clear": "清空",
+    "save": "儲存進程",
+    "recommendation": "推薦下一個",
+    "current": "Current",
+    "saved": "Saved",
+    "empty": "進程尚未開始。",
+    "emptyHistory": "還沒有保存的進程。"
+  },
+  "actions": {
+    "remove": "移除",
+    "load": "載入",
+    "resize": "調整大小"
+  },
+  "fab": {
+    "ariaLabel": "打開/關閉 Progression 視窗"
+  },
+  "tabs": {
+    "chord": "和弦"
+  },
+  "midi": {
+    "title": "MIDI 分析",
+    "hint": "先看骨架與延伸音，再對照時間軸與音符。",
+    "open": "開啟 MIDI",
+    "fileAria": "選擇 MIDI 檔案",
+    "status": {
+      "empty": "尚未載入 MIDI 檔案。",
+      "reading": "正在讀取 {{name}}…",
+      "noTracks": "這個 MIDI 沒有可分析的非鼓分軌。",
+      "readError": "MIDI 讀取失敗，請再試一次。",
+      "summary": "{{name}} · {{bars}} 小節 · {{chords}} 個和弦 · {{notes}} 個音 · {{beat}}",
+      "summaryArpeggio": "{{name}} · {{bars}} 小節 · {{chords}} 個和弦 · {{arpeggios}} 段分解 · {{notes}} 個音 · {{beat}}"
+    },
+    "empty": {
+      "title": "把 MIDI 檔拖到這裡",
+      "text": "支援 .mid 與 .midi。載入後會標出和弦、骨架與延伸音。",
+      "cta": "選擇檔案"
+    },
+    "layers": {
+      "label": "分軌",
+      "hint": "點擊獨奏 · Shift + 點擊多選"
+    },
+    "transport": {
+      "play": "播放",
+      "pause": "暫停",
+      "stop": "停止",
+      "tempo": "速度",
+      "unsupported": "此環境不支援音訊播放"
+    },
+    "timeline": {
+      "label": "和弦時間軸",
+      "hint": "點和弦，對照下方音符"
+    },
+    "zoom": {
+      "label": "縮放",
+      "in": "放大時間軸",
+      "out": "縮小時間軸"
+    },
+    "undetermined": "未判定",
+    "arpeggio": {
+      "title": "分解和弦",
+      "short": "分解",
+      "story": "這些和弦音是先後出現，沒有同時擊發，所以先不判定和弦。對照 piano roll 的音高，再從尾音回頭推測它可能屬於哪個和弦。"
+    },
+    "chord": {
+      "title": "{{symbol}} · {{roman}} · 第 {{bar}} 小節",
+      "titleArpeggio": "分解和弦 · 未判定 · 第 {{bar}} 小節"
+    },
+    "detail": {
+      "hintSelect": "點選上方和弦，查看它的組成。",
+      "hintEmpty": "沒有找到可辨識的和弦，先確認啟用的分軌。",
+      "meta": "第 {{bar}} 小節 · {{start}}–{{end}} · {{count}} 個音",
+      "tail": "尾音",
+      "tailHint": "{{note}}（僅供參考）",
+      "unreadable": "無法判讀",
+      "outOfKey": "調外",
+      "outOfKeyChord": "調外和弦",
+      "notInKey": "不在目前調內",
+      "storyUnknown": "這組音不在目前的辨識表裡。先看下面每個音的音名與級數，找出它的根音與三度。",
+      "storySkeletonExt": "先抓 {{skeleton}} 當骨架，再加上 {{extensions}}。",
+      "storySkeleton": "骨架是 {{skeleton}}（{{quality}}），沒有額外的延伸音。",
+      "storyNoThird": "這個和弦沒有明確的三度，先聽它的聲響，再對照音名。",
+      "base": "基礎",
+      "skeleton": "骨架",
+      "omitted": "省略 {{notes}}"
+    },
+    "roll": {
+      "noTracks": "沒有啟用的樂器分軌",
+      "noTracksHint": "沒有啟用的樂器分軌，請從上方重新選取。",
+      "aria": "{{name}}：{{notes}} 個音符，{{chords}} 個和弦段落",
+      "trackFallback": "分軌 {{index}}"
+    },
+    "track": {
+      "soloHint": "點擊只聽這一軌，Shift + 點擊可多選",
+      "addHint": "點擊加入這一軌",
+      "notes": "{{count}} 音",
+      "all": "全部"
+    },
+    "function": {
+      "tonic": "主功能",
+      "subdominant": "下屬功能",
+      "dominant": "屬功能",
+      "borrowed": "借用和弦",
+      "secondary-dominant": "副屬和弦"
+    },
+    "role": {
+      "root": "根音",
+      "guide": "引導音",
+      "stable": "五度",
+      "color": "色彩音"
+    },
+    "legend": {
+      "root": "根音",
+      "guide": "3・7 引導",
+      "stable": "5 支撐",
+      "color": "延伸色彩"
+    },
+    "quality": {
+      "major": "大三和弦",
+      "minor": "小三和弦",
+      "dom7": "屬七和弦",
+      "maj7": "大七和弦",
+      "min7": "小七和弦",
+      "halfDim": "半減七和弦",
+      "dim7": "減七和弦",
+      "dim": "減三和弦",
+      "aug": "增三和弦",
+      "dom7b5": "屬七降五",
+      "dom7Sharp5": "屬七增五",
+      "chord": "和弦"
+    }
+  }
+}

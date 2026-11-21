@@ -1,0 +1,160 @@
+{
+  "header": {
+    "subtitle": "Decompose Notes & Chords"
+  },
+  "key": {
+    "label": "Song Key"
+  },
+  "chord": {
+    "label": "Chord Symbol",
+    "placeholder": "e.g. Cmaj7, F#m7b5, Bb13",
+    "notesPlaceholder": "e.g. C E G, D F# A",
+    "empty": "Enter a chord symbol to see the result.",
+    "notFound": "Chord not found. Please check the symbol.",
+    "notFoundNotes": "Chord not found. Please check the notes.",
+    "notesLabel": "Notes: ",
+    "notInKey": "Not in key",
+    "detected": "Detected chords from notes ({{count}} possible):",
+    "more": "And {{count}} more possibilities...",
+    "enharmonicTip": "Tip: {{current}} is usually spelled as {{preferred}} in this key",
+    "useInstead": "Use {{preferred}}"
+  },
+  "inputMode": {
+    "chord": "Chord",
+    "notes": "Notes"
+  },
+  "progression": {
+    "title": "Progression",
+    "add": "Add",
+    "clear": "Clear",
+    "save": "Save Progression",
+    "recommendation": "Recommended Next",
+    "current": "Current",
+    "saved": "Saved",
+    "empty": "No progression yet.",
+    "emptyHistory": "No saved progressions."
+  },
+  "actions": {
+    "remove": "Remove",
+    "load": "Load",
+    "resize": "Resize"
+  },
+  "fab": {
+    "ariaLabel": "Open/Close Progression window"
+  },
+  "tabs": {
+    "chord": "Chords"
+  },
+  "midi": {
+    "title": "MIDI analysis",
+    "hint": "Read the skeleton and extensions, then compare the timeline with the notes.",
+    "open": "Open MIDI",
+    "fileAria": "Choose a MIDI file",
+    "status": {
+      "empty": "No MIDI file loaded.",
+      "reading": "Reading {{name}}…",
+      "noTracks": "This MIDI has no non-drum tracks to analyse.",
+      "readError": "Could not read the MIDI file. Please try again.",
+      "summary": "{{name}} · {{bars}} bars · {{chords}} chords · {{notes}} notes · {{beat}}",
+      "summaryArpeggio": "{{name}} · {{bars}} bars · {{chords}} chords · {{arpeggios}} arpeggios · {{notes}} notes · {{beat}}"
+    },
+    "empty": {
+      "title": "Drop a MIDI file here",
+      "text": "Supports .mid and .midi. Chords, skeletons and extensions are labelled after loading.",
+      "cta": "Choose file"
+    },
+    "layers": {
+      "label": "Tracks",
+      "hint": "Click to solo · Shift + click for multiple"
+    },
+    "transport": {
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "tempo": "Tempo",
+      "unsupported": "Audio playback is not available in this environment"
+    },
+    "timeline": {
+      "label": "Chord timeline",
+      "hint": "Click a chord to compare it with the notes below"
+    },
+    "zoom": {
+      "label": "Zoom",
+      "in": "Zoom in timeline",
+      "out": "Zoom out timeline"
+    },
+    "undetermined": "Undetermined",
+    "arpeggio": {
+      "title": "Arpeggiated chord",
+      "short": "Arpeggio",
+      "story": "These notes arrive one after another instead of together, so the chord is left undetermined. Compare the pitches in the piano roll and work back from the last note."
+    },
+    "chord": {
+      "title": "{{symbol}} · {{roman}} · bar {{bar}}",
+      "titleArpeggio": "Arpeggio · undetermined · bar {{bar}}"
+    },
+    "detail": {
+      "hintSelect": "Select a chord above to see how it is built.",
+      "hintEmpty": "No recognisable chords. Check which tracks are enabled.",
+      "meta": "Bar {{bar}} · {{start}}–{{end}} · {{count}} notes",
+      "tail": "Last note",
+      "tailHint": "{{note}} (for reference)",
+      "unreadable": "Unreadable",
+      "outOfKey": "Out of key",
+      "outOfKeyChord": "Out-of-key chord",
+      "notInKey": "Not in the current key",
+      "storyUnknown": "This set of notes is not in the recognition table. Read each name and degree below to find its root and third.",
+      "storySkeletonExt": "Start from {{skeleton}} as the skeleton, then add {{extensions}}.",
+      "storySkeleton": "The skeleton is {{skeleton}} ({{quality}}), with no extra extensions.",
+      "storyNoThird": "This chord has no clear third. Listen to the sonority, then compare the note names.",
+      "base": "Base",
+      "skeleton": "Skeleton",
+      "omitted": "Omits {{notes}}"
+    },
+    "roll": {
+      "noTracks": "No instrument tracks enabled",
+      "noTracksHint": "No instrument tracks are enabled. Select one above.",
+      "aria": "{{name}}: {{notes}} notes, {{chords}} chord segments",
+      "trackFallback": "Track {{index}}"
+    },
+    "track": {
+      "soloHint": "Click to hear only this track, Shift + click for multiple",
+      "addHint": "Click to add this track",
+      "notes": "{{count}} notes",
+      "all": "All"
+    },
+    "function": {
+      "tonic": "Tonic",
+      "subdominant": "Subdominant",
+      "dominant": "Dominant",
+      "borrowed": "Borrowed",
+      "secondary-dominant": "Secondary dominant"
+    },
+    "role": {
+      "root": "Root",
+      "guide": "Guide tone",
+      "stable": "Fifth",
+      "color": "Colour tone"
+    },
+    "legend": {
+      "root": "Root",
+      "guide": "3 / 7 guide",
+      "stable": "5 support",
+      "color": "Extension colour"
+    },
+    "quality": {
+      "major": "major triad",
+      "minor": "minor triad",
+      "dom7": "dominant seventh",
+      "maj7": "major seventh",
+      "min7": "minor seventh",
+      "halfDim": "half-diminished",
+      "dim7": "diminished seventh",
+      "dim": "diminished triad",
+      "aug": "augmented triad",
+      "dom7b5": "dominant seventh flat five",
+      "dom7Sharp5": "dominant seventh sharp five",
+      "chord": "chord"
+    }
+  }
+}

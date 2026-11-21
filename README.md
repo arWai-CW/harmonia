@@ -1,122 +1,137 @@
-<h1 align="center">Harmonia</h1>
+<h1 align="center">Harmonia 🎵</h1>
+<h3 align="center">A Minimalist Music Theory & Chord Progression Tool</h3>
 
-<p align="center">
-  <strong>把和弦拆開，讓和聲看得見。</strong><br />
-  給學習者與作曲者的和弦分析、MIDI 拆解與和聲練習工具。
-</p>
+<div align="center">
 
-<p align="center">
-  <a href="https://tauri.app/"><img alt="Tauri" src="https://img.shields.io/badge/Tauri-2-24C8DB?logo=tauri&logoColor=white" /></a>
-  <a href="https://vitejs.dev/"><img alt="Vite" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white" /></a>
-  <a href="https://tailwindcss.com/"><img alt="Tailwind CSS" src="https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white" /></a>
-  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-GPL--3.0-1b1d20" /></a>
-</p>
+Forked from: [不囉唆的和弦代號查詢器 by NiceChord 好和弦](https://github.com/wiwikuan/chordfinder)  
+Modified by: arWai-CW
 
-![Harmonia 的 MIDI 分析介面：時間軸、和弦骨架、基礎三和弦與鋼琴捲簾](docs/midi-analysis.png)
+[![My Skills](https://skillicons.dev/icons?i=js,html,css,rust,tauri,vite)](https://skillicons.dev)
 
-## 這是什麼
+English | [中文](https://github.com/arWai-CW/harmonia/blob/main/docs/README_zh.md)
 
-Harmonia 是一個網頁與桌面皆可使用的音樂理論工具。它不只告訴你「這個和弦有哪些音」，而是把和弦拆成可以理解的層次：
+![Main UI](./screenshot/main_ui.webp)
 
-- 輸入 `Cm7add9`，馬上看到組成音、調性內的拼寫與和聲功能。
-- 載入 MIDI，沿著時間軸看每個和聲的骨架、延伸音與基礎三和弦。
-- 把和弦組成進行，累積自己的練習材料。
+</div>
 
-介面以鋼琴捲簾與時間軸為核心，讓「聲音」和「理論」出現在同一個畫面上。
+---
 
-## 功能
+## ℹ️ tl;dr
 
-### 和弦拆解
+**Harmonia** is a music theory tool for looking up chord structures and building progressions.
 
-輸入和弦代號，取得組成音、和弦性質與調性內的正確拼寫。`C#` 與 `Db` 不再混用；`F#m7b5`、`Bb13`、`Cmaj9` 這類代號都能直接解析。
+- 🎹 Input a chord symbol → see its notes, sheet music, and harmonic analysis
+- 🔍 Input notes → detect possible chords
+- 🎼 Build chord progressions with drag-and-drop
+- 🖥️ Works as a web app and native desktop app (Tauri)
 
-### 調性與功能
+Try it yourself: https://harmonia.arwai.org/
 
-選擇大調或小調，Harmonia 會標出每個和弦的羅馬數字與功能：
+## 🆕 What I added
 
-- 綠色：主功能（I、iii、vi）
-- 藍色：下屬功能（ii、IV）
-- 紅色：屬功能（V、vii°）
+Changes from the original fork:
 
-屬和弦、副屬和弦、借用和弦也會標示來源，而不是硬套一個看起來合理的級數。
+- Rebuilt the entire UI from scratch
+- Added chord progression builder with drag-and-drop reordering
+- Added chord analysis with Roman numeral notation
+- Added notes-to-chord detection
+- Added MIDI analysis: chord timeline, skeleton/extension breakdown, per-track solo, playback
+- Added English, Traditional Chinese, Simplified Chinese and Japanese UI
+- Packaged as a native desktop app using Tauri
 
-### MIDI 分析
+## ✨ Features and Usage
 
-把 MIDI 檔拖進來，Harmonia 會沿著時間軸標出每個和弦：
+**Harmonia** is a web and desktop music theory tool designed to help music enthusiasts quickly look up and understand chord structures.
 
-- **骨架與延伸音**：`C11` 會拆成 `C7` 骨架加上 9、11，說明這個和弦是怎麼被疊出來的。
-- **基礎三和弦**：`Cm7add9` 會標出 `Cm`（C–E–G），鋼琴捲簾同步外框根音、三度、五度，其餘音變淡。
-- **分軌**：依音軌上色，點擊單獨聆聽，Shift 點擊可多選。
-- **分解和弦**：沒有同時擊發、無法可靠判定的段落，標記為「分解／未判定」，不硬猜。
-- **試聽與播放**：播放、暫停、停止、playhead、50%–150% 速度控制。
+### 🌟 Core Features
 
-### 和弦進行
+- **Chord Parsing**: Simply input a chord symbol (e.g., Cmaj7, F#m7b5, Bb13) to instantly view its constituent notes.
+- **Notes Detection**: Input multiple notes (e.g., C E G) to detect possible chords.
+- **Sheet Music Render**: Displays chords on a musical staff using ABC notation.
+- **Harmonic Analysis**: Select a key (e.g., C Major or A Minor) to automatically view the correct note spellings and functional analysis.
+- **Chord Progression Builder**: Create and save chord progressions with drag-and-drop reordering support.
+- **MIDI Analysis**: Load a `.mid` file to see every chord on a timeline, split it into skeleton and extensions, isolate tracks and play it back.
 
-把查詢結果加入進行，拖放調整順序，儲存常用的進行。歷史記錄與進行都存在本機，不需要帳號。
+![MIDI analysis](./docs/midi-analysis.png)
 
-## 快速開始
+### 💡 How to Use
 
-### 網頁版
+1. Enter a chord name or notes in the input field.
+2. Select the song's key (Major or Minor).
+3. Instantly view the chord's notes, sheet music representation, and harmonic function.
+4. Click the "Add" button to build a chord progression.
+5. Use the drag-and-drop feature to rearrange the chord sequence to your liking.
 
-需要 [Bun](https://bun.sh/)。
+### 🚀 Quick Start
 
-```bash
-bun install
-bun run dev
-```
+- **Web Mode**: Run `bun run dev` to start the development server at `localhost:5173`.
+- **Desktop Application**: Run `bun run t:dev` to launch the Tauri desktop app.
 
-打開 `http://localhost:5173`。
+---
 
-### 桌面版
+## 🏗️ Architecture
 
-需要 Rust 與 Tauri 的系統依賴。
+### 🛠️ Tech Stack
 
-```bash
-bun run t:dev
-```
+- **Frontend**: Vanilla JavaScript + Tailwind CSS v4
+- **Desktop Framework**: Tauri (Rust + Web Technologies)
+- **Music Theory Engine**: Tonal.js for chord analysis
+- **Sheet Music Render**: abcjs for ABC notation display
+- **UI Interaction**: SortableJS for drag-and-drop functionality
 
-打包桌面安裝檔：
-
-```bash
-bun run t:build
-```
-
-## Development
-
-**Stack**：Vanilla JavaScript、Vite、Tailwind CSS v4、Tauri 2。音樂理論使用 Tonal，樂譜使用 abcjs，MIDI 解析使用 `@tonejs/midi`。
+### 📁 Code Structure
 
 ```text
-src/
-├── main.js           # 應用入口、狀態與畫面渲染
-├── chord-utils.js    # 和弦解析、調性與音名拼寫
-├── chord-function.js # 羅馬數字與和聲功能分析
-├── midi-utils.js     # MIDI 解析、和弦切段、骨架與基礎三和弦
-├── drag-utils.js     # 拖放封裝
-├── index.html
-└── styles.css
+harmonia/
+├── src/                    # Frontend source code
+│   ├── main.js             # Application entry point (thin initializer)
+│   ├── state.js            # State management & localStorage persistence
+│   ├── renderer.js         # DOM rendering & ABC notation display
+│   ├── events.js           # Event binding & input handling
+│   ├── window-manager.js   # Floating window drag/resize
+│   ├── chord-utils.js      # Music theory utility functions
+│   ├── chord-function.js   # Harmonic function analysis (Roman numerals)
+│   ├── midi-utils.js       # MIDI parsing, chord segmentation, base triad
+│   ├── midi-panel.js       # MIDI tab: timeline, piano roll, playback
+│   ├── i18n/               # UI strings (en, zh-TW, zh-CN, ja)
+│   ├── styles.css          # Tailwind CSS styles
+│   └── tests/              # Browser-based test framework
+├── src-tauri/              # Tauri backend source code
+└── docs/                   # Documentation
 ```
 
-常用指令：
+### 🧠 Core Concepts
 
-| 指令              | 用途                     |
-| ----------------- | ------------------------ |
-| `bun run dev`     | 啟動網頁開發伺服器       |
-| `bun run build`   | 建置網頁版到 `dist/`     |
-| `bun run t:dev`   | 啟動 Tauri 桌面開發模式  |
-| `bun run t:build` | 建置桌面安裝檔           |
+1. **Factory Pattern**: Uses `createStorage()` and `createState()` to abstract state management.
+2. **Pure Functions**: All music theory logic is built using pure functions without side effects.
+3. **Event-Driven**: Relies on event listeners to handle user interactions.
+4. **Local Storage**: Uses `localStorage` to persist progression and settings.
+5. **Modular Design**: Clear separation of concerns across modules.
 
-測試是瀏覽器內的輕量測試框架，沒有額外 test runner：
+## 🧭 Design Philosophy
 
-```bash
-bunx vite . --port 5174
-```
+- **Simple & Intuitive**: No unnecessary clutter; strictly focused on core chord lookup functionality.
+- **Performance First**: Built with pure JavaScript, avoiding heavy framework overhead.
+- **Educational Tool**: Perfectly tailored for music students and composers wanting to understand chord structures.
+- **Cross-Platform**: Runs seamlessly as both a web application and a desktop app.
 
-打開 `http://localhost:5174/tests/index.html`。音樂理論邏輯請優先補上 `tests/` 下的測試。
+### 🎨 Color Coding System
 
-## Credits
+- 🟢 **Green**: Tonic function (I, iii, vi)
+- 🔵 **Blue**: Subdominant function (ii, IV)
+- 🔴 **Red**: Dominant function (V, vii°)
 
-Fork 自 [不囉唆的和弦代號查詢器](https://github.com/wiwikuan/chordfinder) by NiceChord 好和弦，由 arWai 修改與延伸。
+---
 
-感謝 Tonal、abcjs、Tone.js MIDI、Tauri、Tailwind CSS 與 Vite。
+### 💻 Development Workflow
 
-授權：[GPL-3.0](LICENSE)。
+1. **Install Dependencies**: `bun install`
+2. **Web Dev Server**: `bun run dev`
+3. **Tauri Dev Server**: `bun run t:dev`
+4. **Production Build**: `bun run build` (Web) or `bun run t:build` (Desktop)
+5. **Run Tests**: Start dev server, then open `http://localhost:5173/tests/index.html`
+
+### ⚙️ Recommended IDE Setup
+
+- [VS Code](https://code.visualstudio.com/) + [Tauri Extension](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode)
+- [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)

@@ -14,20 +14,28 @@
 harmonia/
 ├── src/                    # Frontend source (Vite root)
 │   ├── index.html          # Main HTML with embedded modal logic
-│   ├── main.js             # Application entry point & state management
+│   ├── main.js             # Application entry point (thin initializer)
+│   ├── state.js            # State management & localStorage persistence
+│   ├── renderer.js         # DOM rendering & ABC notation display
+│   ├── events.js           # Event binding & input handling
+│   ├── window-manager.js   # Floating window drag/resize & state persistence
 │   ├── styles.css          # Tailwind CSS v4 with custom components
 │   ├── chord-utils.js      # Music theory utilities (chord parsing, key definitions)
 │   ├── chord-function.js   # Harmonic function analysis (Roman numerals)
-│   ├── drag-utils.js       # SortableJS wrapper for drag-and-drop
+│   ├── midi-utils.js       # MIDI parsing, chord segmentation, base triad
+│   ├── midi-panel.js       # MIDI tab: timeline, piano roll, playback
+│   ├── i18n/               # UI strings (en, zh-TW, zh-CN, ja)
+│   ├── tests/              # Browser-based test framework
+│   │   ├── index.html      # Test runner
+│   │   ├── chord-utils.test.js
+│   │   ├── chord-function.test.js
+│   │   └── midi-utils.test.js
 │   └── assets/             # Static assets (tauri.svg, javascript.svg)
 ├── src-tauri/              # Tauri desktop app backend
 │   ├── src/                # Rust source code
 │   ├── icons/              # Application icons
 │   ├── Cargo.toml          # Rust package configuration
 │   └── tauri.conf.json     # Tauri app configuration
-├── tests/                  # Test files
-│   ├── index.html          # Browser-based test runner
-│   └── chord-utils.test.js # Custom test harness for chord utilities
 ├── dist/                   # Build output (gitignored)
 ├── package.json           # Node.js dependencies and scripts
 ├── vite.config.js         # Vite build configuration
@@ -39,10 +47,15 @@ harmonia/
 
 - **ES6 Modules**: All JavaScript files use `import`/`export` syntax
 - **Separation of Concerns**:
-    - `main.js`: App orchestration, state management, UI rendering
+    - `main.js`: Thin initialization layer, coordinates modules
+    - `state.js`: State management & localStorage persistence
+    - `renderer.js`: DOM rendering & ABC notation display
+    - `events.js`: Event binding, input handling & business logic
+    - `window-manager.js`: Floating window drag/resize & state persistence
     - `chord-utils.js`: Pure music theory utilities (no side effects)
     - `chord-function.js`: Harmonic analysis logic
-    - `drag-utils.js`: UI interaction wrapper
+    - `midi-utils.js`: Pure MIDI parsing and chord segmentation
+    - `midi-panel.js`: MIDI tab controller (`createMidiPanel(state)`)
 - **Single-Page Application**: All UI logic in one HTML file with embedded modal
 - **Factory Pattern**: `createStorage()`, `createState()` for abstraction
 
@@ -88,20 +101,20 @@ harmonia/
 **Custom Browser-Based Test Framework**:
 
 - No Jest/Vitest/Mocha installed
-- Tests run by opening `tests/index.html` in browser
+- Tests run via Vite dev server (ES modules require CORS)
 - Custom test harness in `chord-utils.test.js` with `assertEqual()` and `test()` helpers
 
 **To run tests**:
 
-1. Open `tests/index.html` in any web browser
-2. Tests auto-execute and display results with styling
-3. No CI/CD pipeline configured
+1. Start dev server: `bun run dev`
+2. Open `http://localhost:5173/tests/index.html` in browser
+3. Tests auto-execute and display results with styling
 
 **To add tests**:
 
-1. Create new `.test.js` file in `tests/` directory
+1. Create new `.test.js` file in `src/tests/` directory
 2. Export a `runXxxTests()` function following existing pattern
-3. Add test case to `tests/index.html` if needed
+3. Import and add to `tests/index.html`
 
 ---
 
@@ -115,7 +128,7 @@ harmonia/
 
 ### JavaScript Style
 
-- **Variables**: camelCase (`currentChord`, `historyArray`)
+- **Variables**: camelCase (`currentChord`, `progression`)
 - **Constants**: UPPER_SNAKE_CASE (`STORAGE_KEYS`, `MAJOR_ROOTS`)
 - **Functions**: camelCase with descriptive verbs (`sanitizeChordInput`, `renderProgression`)
 - **Classes**: PascalCase (not currently used in codebase)
@@ -159,7 +172,7 @@ harmonia/
 ### State Management Pattern
 
 ```javascript
-// Factory pattern for storage abstraction
+// Factory pattern for storage abstraction (state.js)
 const createStorage = (backend) => ({
 	load(key, fallback) {
 		try {
@@ -174,10 +187,9 @@ const createStorage = (backend) => ({
 	},
 });
 
-// Centralized state container
+// Centralized state container (state.js)
 const createState = (storage) => ({
 	currentChord: null,
-	history: storage.load(STORAGE_KEYS.HISTORY, []),
 	progression: storage.load(STORAGE_KEYS.PROGRESSION, []),
 	progressionHistory: storage.load(STORAGE_KEYS.PROGRESSION_HISTORY, []),
 	keyRoot: storage.load(STORAGE_KEYS.KEY_ROOT, "C"),
@@ -314,6 +326,15 @@ const createState = (storage) => ({
 - `createStorage()` abstracts localStorage
 - `createState()` centralizes application state
 - Easy to swap storage backends if needed
+
+### 6. Module Decomposition
+
+- `main.js` is a thin initializer (~80 lines)
+- `state.js` owns state transitions and persistence
+- `renderer.js` owns DOM rendering
+- `events.js` owns event binding and business logic
+- `window-manager.js` owns floating window behavior
+- Clear dependency graph: main → events → renderer → chord-utils
 
 ---
 

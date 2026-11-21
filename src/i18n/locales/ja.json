@@ -1,0 +1,160 @@
+{
+  "header": {
+    "subtitle": "音と和音を分解"
+  },
+  "key": {
+    "label": "曲のキー"
+  },
+  "chord": {
+    "label": "コード記号",
+    "placeholder": "例：Cmaj7、F#m7b5、Bb13",
+    "notesPlaceholder": "例：C E G、D F# A",
+    "empty": "コード記号を入力して結果を表示。",
+    "notFound": "コードが見つかりません。記号を確認してください。",
+    "notFoundNotes": "コードが見つかりません。音符を確認してください。",
+    "notesLabel": "構成音：",
+    "notInKey": "調内コードではない",
+    "detected": "音符からコードを推測 ({{count}} 個の可能性):",
+    "more": "他に {{count}} 個の可能性...",
+    "enharmonicTip": "ヒント：{{current}} はこのキーで {{preferred}} と表記されることが多い",
+    "useInstead": "{{preferred}} を使用"
+  },
+  "inputMode": {
+    "chord": "コード",
+    "notes": "構成音"
+  },
+  "progression": {
+    "title": "Progression",
+    "add": "追加",
+    "clear": "クリア",
+    "save": "進行を保存",
+    "recommendation": "おすすめ次コード",
+    "current": "Current",
+    "saved": "Saved",
+    "empty": "まだ進行がありません。",
+    "emptyHistory": "保存された進行はありません。"
+  },
+  "actions": {
+    "remove": "削除",
+    "load": "読込",
+    "resize": "サイズ調整"
+  },
+  "fab": {
+    "ariaLabel": "Progression ウィンドウを開く/閉じる"
+  },
+  "tabs": {
+    "chord": "コード"
+  },
+  "midi": {
+    "title": "MIDI 分析",
+    "hint": "骨格とテンションを見てから、タイムラインと音符を照らし合わせます。",
+    "open": "MIDI を開く",
+    "fileAria": "MIDI ファイルを選択",
+    "status": {
+      "empty": "MIDI ファイルは未読み込みです。",
+      "reading": "{{name}} を読み込み中…",
+      "noTracks": "解析できる非ドラムのトラックがありません。",
+      "readError": "MIDI を読み込めませんでした。もう一度お試しください。",
+      "summary": "{{name}} · {{bars}} 小節 · {{chords}} コード · {{notes}} 音 · {{beat}}",
+      "summaryArpeggio": "{{name}} · {{bars}} 小節 · {{chords}} コード · アルペジオ {{arpeggios}} 箇所 · {{notes}} 音 · {{beat}}"
+    },
+    "empty": {
+      "title": "MIDI ファイルをここにドロップ",
+      "text": ".mid と .midi に対応。読み込むとコード・骨格・テンションを表示します。",
+      "cta": "ファイルを選択"
+    },
+    "layers": {
+      "label": "トラック",
+      "hint": "クリックでソロ · Shift + クリックで複数選択"
+    },
+    "transport": {
+      "play": "再生",
+      "pause": "一時停止",
+      "stop": "停止",
+      "tempo": "テンポ",
+      "unsupported": "この環境では音声再生を利用できません"
+    },
+    "timeline": {
+      "label": "コードタイムライン",
+      "hint": "コードをクリックして下の音符と照合"
+    },
+    "zoom": {
+      "label": "ズーム",
+      "in": "タイムラインを拡大",
+      "out": "タイムラインを縮小"
+    },
+    "undetermined": "判定不可",
+    "arpeggio": {
+      "title": "アルペジオ",
+      "short": "分散",
+      "story": "これらの音は同時ではなく順に鳴っているため、コードは判定しません。ピアノロールの音高を見て、最後の音から逆算してください。"
+    },
+    "chord": {
+      "title": "{{symbol}} · {{roman}} · {{bar}} 小節",
+      "titleArpeggio": "アルペジオ · 判定不可 · {{bar}} 小節"
+    },
+    "detail": {
+      "hintSelect": "上のコードを選ぶと構成を表示します。",
+      "hintEmpty": "判別できるコードがありません。有効なトラックを確認してください。",
+      "meta": "{{bar}} 小節 · {{start}}–{{end}} · {{count}} 音",
+      "tail": "最後の音",
+      "tailHint": "{{note}}（参考）",
+      "unreadable": "判読不可",
+      "outOfKey": "調外",
+      "outOfKeyChord": "調外コード",
+      "notInKey": "現在のキー外",
+      "storyUnknown": "この音の組み合わせは判定表にありません。下の各音の音名と度数から根音と三度を探してください。",
+      "storySkeletonExt": "{{skeleton}} を骨格にして、{{extensions}} を加えています。",
+      "storySkeleton": "骨格は {{skeleton}}（{{quality}}）で、追加のテンションはありません。",
+      "storyNoThird": "このコードには明確な三度がありません。響きを聴いてから音名を確認してください。",
+      "base": "基本形",
+      "skeleton": "骨格",
+      "omitted": "{{notes}} を省略"
+    },
+    "roll": {
+      "noTracks": "有効な楽器トラックがありません",
+      "noTracksHint": "有効な楽器トラックがありません。上から選び直してください。",
+      "aria": "{{name}}：{{notes}} 音、{{chords}} コード区間",
+      "trackFallback": "トラック {{index}}"
+    },
+    "track": {
+      "soloHint": "クリックでこのトラックのみ再生、Shift + クリックで複数選択",
+      "addHint": "クリックでこのトラックを追加",
+      "notes": "{{count}} 音",
+      "all": "すべて"
+    },
+    "function": {
+      "tonic": "主機能",
+      "subdominant": "下属機能",
+      "dominant": "属機能",
+      "borrowed": "借用和音",
+      "secondary-dominant": "副属和音"
+    },
+    "role": {
+      "root": "根音",
+      "guide": "ガイド音",
+      "stable": "五度",
+      "color": "色彩音"
+    },
+    "legend": {
+      "root": "根音",
+      "guide": "3・7 ガイド",
+      "stable": "5 サポート",
+      "color": "テンション色彩"
+    },
+    "quality": {
+      "major": "長三和音",
+      "minor": "短三和音",
+      "dom7": "属七和音",
+      "maj7": "長七和音",
+      "min7": "短七和音",
+      "halfDim": "半減七和音",
+      "dim7": "減七和音",
+      "dim": "減三和音",
+      "aug": "増三和音",
+      "dom7b5": "属七降五",
+      "dom7Sharp5": "属七増五",
+      "chord": "和音"
+    }
+  }
+}

@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
-		<title>Chord Utils Tests</title>
+		<title>Harmonia Tests</title>
 		<style>
 			body {
 				font-family: "SF Pro Display", "SF Pro Text", "Helvetica Neue", "Noto Sans TC", sans-serif;
@@ -47,7 +47,7 @@
 	</head>
 	<body>
 		<div class="card">
-			<h1>Chord Utils Tests</h1>
+			<h1>Harmonia Tests</h1>
 			<div id="results"></div>
 		</div>
 		<script type="module">
@@ -55,14 +55,14 @@
 			import { runChordFunctionTests } from "./chord-function.test.js";
 			import { runMidiUtilsTests } from "./midi-utils.test.js";
 
-			const results = [
+			const allResults = [
 				...runChordUtilsTests(),
 				...runChordFunctionTests(),
 				...(await runMidiUtilsTests()),
 			];
 			const container = document.getElementById("results");
 
-			results.forEach((result) => {
+			allResults.forEach((result) => {
 				const row = document.createElement("div");
 				row.className = "result";
 				const name = document.createElement("span");

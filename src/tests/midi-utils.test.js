@@ -1,6 +1,6 @@
 import { Midi } from "@tonejs/midi";
-import { getKeyDefinition } from "../src/chord-utils.js";
-import { MidiFileError, filterMidiView, getBaseTriad, parseMidiFile } from "../src/midi-utils.js";
+import { getKeyDefinition } from "../chord-utils.js";
+import { MidiFileError, filterMidiView, getBaseTriad, parseMidiFile } from "../midi-utils.js";
 
 const KEY = getKeyDefinition("C", "major");
 
