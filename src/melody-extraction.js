@@ -11,11 +11,12 @@ export function applyMelodyOverrides(melody, notes, overrides = new Map()) {
 	return result;
 }
 
-export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overrides } = {}) {
+export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overrides, loudness, audioMelody } = {}) {
 	const valid = notes.filter((note) => Number.isFinite(note.midi) && Number.isFinite(note.startTime) && note.endTime > note.startTime)
 		.sort((a, b) => a.startTime - b.startTime || a.midi - b.midi);
 	if (!valid.length) return { melody: new Map(), velocityEnabled: false };
-	const velocities = valid.map((note) => Number.isFinite(note.velocity) ? note.velocity : 0.8);
+	const getVelocity = (note) => loudness ? (loudness.get(note.id) ?? 0.5) : (Number.isFinite(note.velocity) ? note.velocity : 0.8);
+	const velocities = valid.map(getVelocity);
 	const velocityScale = Math.max(...velocities) > 1 ? 127 : 1;
 	const sortedVelocities = velocities.map((v) => v / velocityScale).sort((a, b) => a - b);
 	const velocityLow = sortedVelocities[Math.floor((sortedVelocities.length - 1) * 0.1)];
@@ -41,10 +42,10 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 			const beats = ppq > 0 && note.endTick > note.startTick ? (note.endTick - note.startTick) / ppq : (note.endTime - note.startTime) / secondsPerBeat;
 			const neighbours = cluster.notes.filter((other) => other !== note && Math.abs(note.midi - other.midi) <= 5);
 			const inner = neighbours.some((n) => n.midi > note.midi) && neighbours.some((n) => n.midi < note.midi);
-			const velocity = velocityEnabled ? (clamp((note.velocity ?? 0.8) / velocityScale, velocityLow, velocityHigh) - (velocityLow + velocityHigh) / 2) / (velocityHigh - velocityLow) * 1.3 : 0;
+			const velocity = velocityEnabled ? (clamp(getVelocity(note) / velocityScale, velocityLow, velocityHigh) - (velocityLow + velocityHigh) / 2) / (velocityHigh - velocityLow) * 1.3 : 0;
 			const emission = -0.35 + (note.midi - low) / (high - low || 1) * 0.25 + (note.midi === high ? 0.15 : 0)
 				+ (cluster.notes.length === 1 ? 0.65 : 0) + 1.35 * Math.log2(1 + Math.min(4, beats))
-				- (inner ? 0.5 : neighbours.length >= 2 ? 0.4 : neighbours.length ? 0.18 : 0) + velocity;
+				- (inner ? 0.5 : neighbours.length >= 2 ? 0.4 : neighbours.length ? 0.18 : 0) + velocity + (audioMelody ? 3 * (audioMelody.get(note.id) ?? 0) : 0);
 			return { note, emission };
 		});
 		cluster.edges = cluster.states.map((state) => previous?.states.map((from) => {

@@ -639,11 +639,11 @@ export async function parseMidiFile(file, keyDefinition) {
 	};
 }
 
-export function filterMidiView(view, enabledTracks, keyDefinition, melodyTrackIndex = null, melodyOverrides = new Map()) {
+export function filterMidiView(view, enabledTracks, keyDefinition, melodyTrackIndex = null, melodyOverrides = new Map(), audioCues = {}) {
 	const enabled = new Set(enabledTracks);
 	const notes = view.notes
 		.filter((note) => enabled.has(note.trackIndex));
-	const extraction = melodyTrackIndex === "auto" ? extractMelodyLine(notes, { ppq: view.ppq, barDuration: view.barDuration, overrides: melodyOverrides }) : null;
+	const extraction = melodyTrackIndex === "auto" ? extractMelodyLine(notes, { ppq: view.ppq, barDuration: view.barDuration, overrides: melodyOverrides, ...audioCues }) : null;
 	const segments = buildSections(
 		notes,
 		view.ppq,
