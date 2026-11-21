@@ -1,5 +1,6 @@
 import { detectKeyRegions, findTwoFiveChains, labelMelodyNotes, nameArpeggioChords } from "../harmony-analysis.js";
 import { getKeyDefinition } from "../chord-utils.js";
+import { Note } from "tonal";
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const segments = (symbols) => symbols.map((symbol, i) => ({ id: `s${i}`, startTime: i * 2, endTime: i * 2 + 2, chord: { symbol } }));
@@ -10,6 +11,23 @@ const test = (name, fn) => {
 
 export function runHarmonyAnalysisTests() {
 	return [
+		test("All 24 detected keys round-trip through the key table", () => {
+			const profiles = {
+				major: [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],
+				minor: [6.33, 2.68, 3.52, 5.38, 2.6, 3.53, 2.54, 4.75, 3.98, 2.69, 3.34, 3.17],
+			};
+			for (const [mode, profile] of Object.entries(profiles)) {
+				for (let root = 0; root < 12; root++) {
+					const notes = profile.map((weight, pc) => ({ midi: 60 + (root + pc) % 12, startTime: 0, endTime: weight }));
+					const regions = detectKeyRegions(notes, [{ index: 1, time: 0 }], 8);
+					assert(regions.length === 1, "one region");
+					const detected = regions[0];
+					const definition = getKeyDefinition(detected.root, detected.mode);
+					assert(Note.chroma(detected.root) === root && detected.mode === mode, `detected ${root} ${mode}: ${JSON.stringify(detected)}`);
+					assert(Note.chroma(definition.id) === root && definition.mode === mode, `round-trip ${detected.root} ${mode}`);
+				}
+			}
+		}),
 		...[[60, 62, 64, 65], [65, 64, 62, 60], [60, 62, 64, 65, 72], [60, 62, 60, 62]].map((pitches) => test(`Stepwise single line stays unlabelled: ${pitches.join(" ")}`, () => {
 			const notes = pitches.map((midi, i) => ({ id: `n${i}`, midi, trackIndex: 0, startTime: i * 2 / pitches.length, endTime: (i + 0.8) * 2 / pitches.length, startTick: i * 1920 / pitches.length, endTick: (i + 0.8) * 1920 / pitches.length }));
 			const found = nameArpeggioChords(notes, [], [{ index: 1, time: 0, tick: 0 }], 2, 480, getKeyDefinition("C", "major"));

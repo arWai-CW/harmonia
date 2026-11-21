@@ -1,5 +1,6 @@
 import { Chord, Interval, Note } from "tonal";
 import { CHORD_TEMPLATES, identifyChord } from "./midi-utils.js";
+import { KEY_DEFINITIONS } from "./chord-utils.js";
 
 const ROOTS = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
 const mod = (n) => ((n % 12) + 12) % 12;
@@ -42,8 +43,10 @@ export function detectKeyRegions(notes, bars, barDuration) {
 	for (let i = bars.length - 1; i >= 0; i--) { keys[i] = key; key = paths[i]?.[key]; }
 	const regions = [];
 	keys.forEach((value, i) => {
-		const root = ROOTS[value % 12];
 		const mode = value < 12 ? "major" : "minor";
+		const preferredRoot = ROOTS[value % 12];
+		const root = KEY_DEFINITIONS.find((definition) => definition.mode === mode && definition.id === preferredRoot)?.id
+			?? KEY_DEFINITIONS.find((definition) => definition.mode === mode && Note.chroma(definition.id) === value % 12).id;
 		const last = regions.at(-1);
 		if (last?.root === root && last.mode === mode) {
 			last.endBar = bars[i].index; last.endTime = bars[i + 1]?.time ?? bars[i].time + barDuration;
