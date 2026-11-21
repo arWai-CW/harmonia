@@ -38,8 +38,7 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 		const resetHistory = (from) => reset && !(from?.lastEndTime > cluster.time + legatoTolerance);
 		const pitches = cluster.notes.map((note) => note.midi);
 		const low = Math.min(...pitches), high = Math.max(...pitches);
-		cluster.states = [...cluster.notes, null].map((note) => {
-			if (!note) return { note: null, emission: cluster.notes.length >= 3 ? -0.05 : -0.65 };
+		cluster.states = cluster.notes.map((note) => {
 			const beats = ppq > 0 && note.endTick > note.startTick ? (note.endTick - note.startTick) / ppq : (note.endTime - note.startTime) / secondsPerBeat;
 			const neighbours = cluster.notes.filter((other) => other !== note && Math.abs(note.midi - other.midi) <= 5);
 			const inner = neighbours.some((n) => n.midi > note.midi) && neighbours.some((n) => n.midi < note.midi);
@@ -49,10 +48,14 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 				- (inner ? 0.5 : neighbours.length >= 2 ? 0.4 : neighbours.length ? 0.18 : 0) + velocity;
 			return { note, emission };
 		});
+		const holds = new Set(previous?.states.filter((from) => from.lastEndTime > cluster.time + legatoTolerance).map((from) => from.lastNote));
+		cluster.states.push({ note: null, emission: cluster.notes.length >= 3 ? -0.05 : -0.65 },
+			...[...holds].map((hold) => ({ note: null, hold, emission: 0 })));
 		cluster.edges = cluster.states.map((state) => previous?.states.map((from) => {
+			if (state.hold) return from.lastNote === state.hold ? 0 : Infinity;
+			if (!state.note && from.lastEndTime > cluster.time + legatoTolerance) return Infinity;
 			if (resetHistory(from)) return 0;
 			const overlap = (from.lastEndTime ?? -Infinity) - (state.note?.startTime ?? cluster.time);
-			if (!state.note && overlap > legatoTolerance) return state.emission - 0.65;
 			if (!state.note) return from.note ? 0.2 : 0;
 			if (overlap > legatoTolerance) return 4 + overlap / secondsPerBeat;
 			if (from.lastPitch === undefined) return 0.15;
@@ -75,6 +78,7 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 			if (resetHistory(from)) from = undefined;
 			state.lastPitch = state.note?.midi ?? from?.lastPitch;
 			state.lastEndTime = state.note?.endTime ?? from?.lastEndTime;
+			state.lastNote = state.note ?? from?.lastNote;
 			state.register = state.note ? (from?.register === undefined ? state.note.midi : from.register * 0.65 + state.note.midi * 0.35) : from?.register;
 		});
 	}

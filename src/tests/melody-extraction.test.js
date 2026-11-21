@@ -22,6 +22,24 @@ export function createHandSwapNotes() {
 export function runMelodyExtractionTests() {
 	const options = { ppq: 480, barDuration: 2 };
 	return [
+		test("A sustaining bass does not crowd out four short melody notes", () => {
+			const notes = [
+				{ id: "bass", midi: 48, startTime: 0, endTime: 2 },
+				...[72, 74, 76, 77].map((midi, i) => ({ id: `line${i}`, midi, startTime: i * 0.5, endTime: i * 0.5 + 0.25 })),
+			];
+			const selected = [...extractMelodyLine(notes, { beatDuration: 0.5, barDuration: 2 }).melody.keys()].sort();
+			assert(selected.join() === "line0,line1,line2,line3", JSON.stringify(selected));
+		}),
+		test("Rest paths keep short and long sustain histories separate", () => {
+			const notes = [
+				{ id: "long", midi: 84, startTime: 0, endTime: 2 },
+				{ id: "short", midi: 72, startTime: 0, endTime: 0.5 },
+				...[36, 40, 43].map((midi, i) => ({ id: `comp${i}`, midi, startTime: 0.6, endTime: 0.61 })),
+				...[72, 74, 76].map((midi, i) => ({ id: `next${i}`, midi, startTime: 1 + i * 0.5, endTime: 1.4 + i * 0.5 })),
+			];
+			const selected = [...extractMelodyLine(notes, { beatDuration: 0.5, barDuration: 2 }).melody.keys()].sort();
+			assert(selected.join() === "next0,next1,next2,short", JSON.stringify(selected));
+		}),
 		test("A sustained melody does not absorb later accompaniment arpeggios", () => {
 			for (const delay of [0.25, 2.25]) {
 				const notes = [
