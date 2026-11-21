@@ -3,6 +3,7 @@ import { Midi } from "@tonejs/midi";
 import { buildStylePreview, buildStylePreviewMidi, voicingMovement } from "../style-preview.js";
 import { getKeyDefinition } from "../chord-utils.js";
 import { findTwoFiveChains } from "../harmony-analysis.js";
+import { CHORD_TEMPLATES } from "../midi-utils.js";
 
 const assert = (condition, message) => { if (!condition) throw new Error(message); };
 const test = (name, fn) => {
@@ -17,6 +18,15 @@ const symbols = (view, style, key = "C", autoKey = true) => buildStylePreview(vi
 
 export function runStylePreviewTests() {
 	return [
+		test("Every analysis template including Cmaj11 survives each style", () => {
+			for (const template of CHORD_TEMPLATES) for (const style of ["rock", "pop", "funk", "ballad"]) {
+				const view = makeView(["C"]);
+				view.segments[0].chord = { symbol: `C${template.symbol}`, root: "C", suffix: template.symbol, intervals: template.intervals };
+				const preview = buildStylePreview(view, style);
+				assert(preview.chords.length === 1 && preview.notes.length > 0, `${style} retains C${template.symbol}`);
+				if (template.symbol === "maj11" && style === "ballad") assert(preview.chords[0].intervals.includes(5), "ballad keeps the major eleventh");
+			}
+		}),
 		test("Rock ii–V–I substitutions transpose from C to F# and Gb", () => {
 			assert(JSON.stringify(symbols(makeView(["Dm7", "G7", "Cmaj7"]), "rock")) === JSON.stringify(["F5", "G5", "C5"]), "C ii becomes IV");
 			for (const key of ["F#", "Gb"]) {

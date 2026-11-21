@@ -63,10 +63,11 @@ export function buildStylePreview(view, style, { keyDefinition = getKeyDefinitio
 	for (const [index, segment] of segments.entries()) {
 		if (!segment.chord || !(segment.endTime > segment.startTime)) continue;
 		const parsed = Chord.get(segment.chord.symbol);
-		if (parsed.empty) continue;
+		const sourceIntervals = parsed.empty ? segment.chord.intervals ?? [] : parsed.intervals;
+		let root = Note.chroma(parsed.empty ? segment.chord.root : parsed.tonic);
+		if (root === null || !sourceIntervals.length) continue;
 		const region = autoKey && view.keyRegions?.find((item) => segment.startTime >= item.startTime && segment.startTime < item.endTime);
 		const key = region ? getKeyDefinition(region.root, region.mode) : keyDefinition;
-		let root = Note.chroma(parsed.tonic);
 		const degree = mod(root - Note.chroma(key.id));
 		const suffix = segment.chord.suffix ?? parsed.aliases[0] ?? "";
 		const isMinor = minor(suffix), isDominant = dominant(suffix), diminished = /dim|m7b5/.test(suffix);
@@ -94,7 +95,8 @@ export function buildStylePreview(view, style, { keyDefinition = getKeyDefinitio
 		const bass = slash && Note.chroma(slash) !== null ? Note.chroma(slash) : root;
 		const bassName = spellNotesWithOctaveInKey([Note.fromMidi(60 + bass)], key)[0].replace(/-?\d+$/, "");
 		const symbol = rootName + replacement + (slash ? `/${bassName}` : "");
-		const intervals = style === "rock" ? [0, 7, 12] : Chord.get(rootName + replacement).intervals.map((interval) => {
+		const replacementIntervals = replacement === suffix ? sourceIntervals : Chord.get(rootName + replacement).intervals;
+		const intervals = style === "rock" ? [0, 7, 12] : replacementIntervals.map((interval) => {
 			const name = Note.transpose(rootName, interval);
 			return mod(Note.chroma(name) - root);
 		});
