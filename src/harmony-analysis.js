@@ -100,10 +100,10 @@ export function findTwoFiveChains(segments) {
 const DEGREES = ["1", "b9", "9", "#9", "3", "11", "#11", "5", "b13", "13", "b7", "7"];
 const CORE = { "1P": "1", "3m": "b3", "3M": "3", "5d": "b5", "5P": "5", "5A": "#5", "7d": "bb7", "7m": "b7", "7M": "7" };
 
-export function labelMelodyNotes(notes, segments, melodyTrackIndex, ppq, barDuration) {
+export function labelMelodyNotes(notes, segments, melodyTrackIndex, ppq, barDuration, melodyIds) {
 	const labels = new Map();
 	if (melodyTrackIndex === null || melodyTrackIndex === undefined) return labels;
-	const melody = notes.filter((n) => n.trackIndex === melodyTrackIndex).sort((a, b) => a.startTime - b.startTime);
+	const melody = notes.filter((n) => melodyIds ? melodyIds.has(n.id) : n.trackIndex === melodyTrackIndex).sort((a, b) => a.startTime - b.startTime);
 	const chords = segments.filter((s) => s.chord && s.chord.symbol !== "?").sort((a, b) => a.startTime - b.startTime);
 	melody.forEach((note, i) => {
 		const segment = chords.findLast((s) => s.startTime <= note.startTime);
