@@ -1,6 +1,7 @@
 import { Midi } from "@tonejs/midi";
 import { Chord, Note } from "tonal";
 import { detectKeyRegions, findTwoFiveChains, nameArpeggioChords } from "./harmony-analysis.js";
+import { extractMelodyLine } from "./melody-extraction.js";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_NOTES = 20000;
@@ -532,8 +533,8 @@ const buildSegments = (notes, ppq, keyDefinition) => {
 };
 
 
-const buildSections = (notes, ppq, keyDefinition, barDuration, bars, melodyTrackIndex = null) => {
-	const harmonyNotes = notes.filter((n) => n.trackIndex !== melodyTrackIndex);
+const buildSections = (notes, ppq, keyDefinition, barDuration, bars, melodyTrackIndex = null, melodyIds = new Set()) => {
+	const harmonyNotes = notes.filter((n) => n.trackIndex !== melodyTrackIndex && !melodyIds.has(n.id));
 	const candidates = buildSegments(harmonyNotes, ppq, keyDefinition);
 	const chordSegments = candidates.filter((segment) => segment.pitchClasses.length >= 3);
 	const arpeggioSegments = nameArpeggioChords(harmonyNotes, chordSegments, bars, barDuration, ppq, keyDefinition);
@@ -638,11 +639,11 @@ export async function parseMidiFile(file, keyDefinition) {
 	};
 }
 
-export function filterMidiView(view, enabledTracks, keyDefinition, melodyTrackIndex = null) {
+export function filterMidiView(view, enabledTracks, keyDefinition, melodyTrackIndex = null, melodyOverrides = new Map()) {
 	const enabled = new Set(enabledTracks);
 	const notes = view.notes
-		.filter((note) => enabled.has(note.trackIndex))
-		.map((note, index) => ({ ...note, id: `n${index}` }));
+		.filter((note) => enabled.has(note.trackIndex));
+	const extraction = melodyTrackIndex === "auto" ? extractMelodyLine(notes, { ppq: view.ppq, barDuration: view.barDuration, overrides: melodyOverrides }) : null;
 	const segments = buildSections(
 		notes,
 		view.ppq,
@@ -650,11 +651,13 @@ export function filterMidiView(view, enabledTracks, keyDefinition, melodyTrackIn
 		view.barDuration,
 		view.bars,
 		melodyTrackIndex,
+		new Set(extraction?.melody.keys()),
 	);
 	return {
 		...view,
 		notes,
 		segments,
+		melodyExtraction: extraction,
 		keyRegions: detectKeyRegions(notes, view.bars, view.barDuration),
 		twoFiveChains: findTwoFiveChains(segments),
 	};

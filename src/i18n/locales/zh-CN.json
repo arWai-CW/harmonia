@@ -46,6 +46,7 @@
     "chord": "和弦"
   },
 	"midi": {
+		"extraction": {"autoExtract":"自动（提取）","hint":"点击音符可切换旋律／伴奏；虚线外框表示判断置信度较低。","toggle":"切换旋律音符：{{note}}"},
 		"harmony": {"autoKey":"自动调性","melody":"旋律音轨","none":"无","major":"大调","minor":"小调","ii-V":"ii–V","ii-subV":"ii–替代属和弦","V-I":"V–I","subV-I":"替代属和弦","backdoor":"后门进行"},
     "title": "MIDI 分析",
     "hint": "先看骨架与延伸音，再对照时间轴与音符。",

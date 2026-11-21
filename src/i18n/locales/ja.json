@@ -46,6 +46,7 @@
     "chord": "コード"
   },
 	"midi": {
+		"extraction": {"autoExtract":"自動（抽出）","hint":"音符をクリックしてメロディーを切り替えます。破線は確信度の低い音を示します。","toggle":"メロディーを切り替え: {{note}}"},
 		"harmony": {"autoKey":"調性を自動検出","melody":"メロディートラック","none":"なし","major":"長調","minor":"短調","ii-V":"ii–V","ii-subV":"ii–裏コード","V-I":"V–I","subV-I":"裏コード","backdoor":"バックドア"},
     "title": "MIDI 分析",
     "hint": "骨格とテンションを見てから、タイムラインと音符を照らし合わせます。",

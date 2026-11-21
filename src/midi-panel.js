@@ -960,7 +960,8 @@ const renderMidiView = (ui, state, keyDefinition) => {
 
 	const selectedNoteIds = new Set(selected?.noteIds ?? []);
 	const showNoteTitles = view.notes.length <= 4000;
-	const melodyLabels = labelMelodyNotes(view.notes, view.segments, state.midiMelodyTrack, view.ppq, view.barDuration);
+	const extracted = view.melodyExtraction?.melody;
+	const melodyLabels = labelMelodyNotes(view.notes, view.segments, state.midiMelodyTrack, view.ppq, view.barDuration, extracted);
 	view.notes.forEach((note) => {
 		const selectedNote = selectedNoteIds.has(note.id);
 		const baseNote =
@@ -977,6 +978,7 @@ const renderMidiView = (ui, state, keyDefinition) => {
 						? 0.6
 						: 0.35;
 		const rect = createSvgElement("rect", {
+			"data-note-id": note.id,
 			x: MIDI_PADDING + note.startTime * pixelsPerSecond,
 			y: (maxPitch - note.midi) * rowHeight + 1,
 			width: Math.max(
@@ -1008,6 +1010,21 @@ const renderMidiView = (ui, state, keyDefinition) => {
 			const text = createSvgElement("text", { x: MIDI_PADDING + note.startTime * pixelsPerSecond + 2, y: (maxPitch - note.midi) * rowHeight + rowHeight - 2, fill: "white", "font-size": Math.max(9, rowHeight - 2), "pointer-events": "none" });
 			text.textContent = melody.label;
 			svg.append(text);
+		}
+		if (state.midiMelodyTrack === "auto") {
+			rect.style.cursor = "pointer";
+			rect.setAttribute("role", "button");
+			rect.setAttribute("tabindex", "0");
+			rect.setAttribute("aria-label", t("midi.extraction.toggle", { note: midiNoteName(note.midi, keyDefinition) }));
+			rect.setAttribute("aria-pressed", String(extracted.has(note.id)));
+			const candidate = extracted.get(note.id);
+			if (candidate) {
+				rect.setAttribute("fill", melody ? rect.getAttribute("fill") : "#0f766e");
+				rect.setAttribute("opacity", "0.95");
+				rect.setAttribute("stroke", candidate.confidence < 0.35 ? "#d97706" : "#134e4a");
+				rect.setAttribute("stroke-width", "1.5");
+				if (candidate.confidence < 0.35) rect.setAttribute("stroke-dasharray", "3 2");
+			}
 		}
 	});
 	ui.midiRollContent.append(svg);
@@ -1084,6 +1101,7 @@ export const createMidiPanel = (state) => {
 	const ui = getMidiElements();
 	state.midiAutoKey = true;
 	state.midiMelodyTrack = null;
+	state.midiMelodyOverrides = new Map();
 	const controls = document.createElement("div");
 	controls.className = "midi-harmony-controls";
 	const autoLabel = document.createElement("label");
@@ -1102,9 +1120,31 @@ export const createMidiPanel = (state) => {
 	melodySelect.id = "midi-melody-track";
 	melodyLabel.append(melodyText, melodySelect);
 	controls.append(autoLabel, melodyLabel);
+	const extractionHint = document.createElement("span");
+	extractionHint.dataset.i18n = "midi.extraction.hint";
+	extractionHint.textContent = t("midi.extraction.hint");
+	extractionHint.hidden = true;
+	controls.append(extractionHint);
 	ui.midiTracks.before(controls);
 	auto.addEventListener("change", () => { state.midiAutoKey = auto.checked; refreshMidiView(); });
-	melodySelect.addEventListener("change", () => { state.midiMelodyTrack = melodySelect.value === "" ? null : Number(melodySelect.value); refreshMidiView(); });
+	melodySelect.addEventListener("change", () => {
+		state.midiMelodyTrack = melodySelect.value === "" ? null : melodySelect.value === "auto" ? "auto" : Number(melodySelect.value);
+		extractionHint.hidden = state.midiMelodyTrack !== "auto";
+		refreshMidiView();
+	});
+	const toggleMelodyNote = (event) => {
+		if (state.midiMelodyTrack !== "auto" || !state.midi) return;
+		const rect = event.target.closest("[data-note-id]");
+		if (!rect) return;
+		if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+		event.preventDefault();
+		const id = rect.dataset.noteId;
+		state.midiMelodyOverrides.set(id, !state.midi.melodyExtraction.melody.has(id));
+		refreshMidiView();
+		if (event.type === "keydown") ui.midiRollContent.querySelector(`[data-note-id="${id}"]`)?.focus();
+	};
+	ui.midiRollContent.addEventListener("click", toggleMelodyNote);
+	ui.midiRollContent.addEventListener("keydown", toggleMelodyNote);
 
 	const setMidiStatus = (message, isError = false) => {
 		ui.midiStatus.textContent = message;
@@ -1120,6 +1160,7 @@ export const createMidiPanel = (state) => {
 			state.midiEnabledTracks,
 			keyDefinition,
 			state.midiMelodyTrack,
+			state.midiMelodyOverrides,
 		);
 		state.midi = view;
 		if (!view.segments.some((segment) => segment.id === state.midiSelectedId)) {
@@ -1163,11 +1204,17 @@ export const createMidiPanel = (state) => {
 			}
 			state.midiSource = source;
 			state.midiMelodyTrack = suggestMelodyTrack(source.notes);
+			state.midiMelodyOverrides = new Map();
+			extractionHint.hidden = true;
 			const none = document.createElement("option");
 			none.value = "";
 			none.dataset.i18n = "midi.harmony.none";
 			none.textContent = t("midi.harmony.none");
-			melodySelect.replaceChildren(none, ...source.tracks.map((track) => {
+			const autoExtract = document.createElement("option");
+			autoExtract.value = "auto";
+			autoExtract.dataset.i18n = "midi.extraction.autoExtract";
+			autoExtract.textContent = t("midi.extraction.autoExtract");
+			melodySelect.replaceChildren(none, autoExtract, ...source.tracks.map((track) => {
 				const option = document.createElement("option");
 				option.value = String(track.index); option.textContent = track.name;
 				return option;

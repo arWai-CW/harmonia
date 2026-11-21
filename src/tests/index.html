@@ -55,12 +55,14 @@
 			import { runChordFunctionTests } from "./chord-function.test.js";
 			import { runMidiUtilsTests } from "./midi-utils.test.js";
 			import { runHarmonyAnalysisTests } from "./harmony-analysis.test.js";
+			import { runMelodyExtractionTests } from "./melody-extraction.test.js";
 
 			const allResults = [
 				...runChordUtilsTests(),
 				...runChordFunctionTests(),
 				...(await runMidiUtilsTests()),
 				...runHarmonyAnalysisTests(),
+				...runMelodyExtractionTests(),
 			];
 			const container = document.getElementById("results");
 
