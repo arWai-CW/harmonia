@@ -32,6 +32,15 @@ export function runAudioMelodyTests() {
 	const contour = extractAudioMelodyContour(samples, sampleRate);
 	const audioMelody = matchAudioMelodyToNotes(contour, notes);
 	return [
+		test("Downsampling rejects strong 20050 Hz interference at 44.1 and 48 kHz", () => {
+			for (const rate of [44100, 48000]) {
+				const contaminated = Float32Array.from({ length: rate }, (_, i) => 0.05 * Math.sin(2 * Math.PI * 440 * i / rate) + 0.8 * Math.sin(2 * Math.PI * 20050 * i / rate));
+				const frames = extractAudioMelodyContour(contaminated, rate);
+				const stable = frames.filter((frame) => frame.time > 0.1 && frame.time < 0.9);
+				assert(stable.length > 70 && stable.every((frame) => frame.midiPitch !== null && Math.abs(frame.midiPitch - 69) <= 0.5), `A4 survives interference at ${rate} Hz`);
+				assert(frames.every((frame) => frame.midiPitch === null || Math.abs(frame.midiPitch - 69) <= 0.5), `no spurious high pitch at ${rate} Hz`);
+			}
+		}),
 		test("Harmonic onset loudness ranks loud lower notes above quiet upper notes", () => {
 			for (let i = 0; i < 4; i++) assert(loudness.get(`lower${i}`) > loudness.get(`upper${i}`), "lower line is louder");
 			assert([...loudness.values()].every((level) => level >= 0 && level <= 1), "normalized levels");

@@ -53,17 +53,42 @@ function fft(real, imaginary) {
 	}
 }
 
+function resampleForMelody(samples, sampleRate, rate) {
+	if (rate === sampleRate) return samples;
+	const signal = new Float32Array(Math.floor(samples.length * rate / sampleRate));
+	const ratio = sampleRate / rate, radius = Math.ceil(16 * ratio), cutoff = 0.45 / ratio;
+	const kernels = new Map();
+	for (let i = 0; i < signal.length; i++) {
+		const position = i * ratio, index = Math.floor(position);
+		const phase = Math.round((position - index) * 1024);
+		let kernel = kernels.get(phase);
+		if (!kernel) {
+			kernel = new Float64Array(2 * radius + 1);
+			let sum = 0;
+			for (let k = -radius; k <= radius; k++) {
+				const distance = k - phase / 1024;
+				const window = Math.abs(distance) > radius ? 0 : 0.42 + 0.5 * Math.cos(Math.PI * distance / radius) + 0.08 * Math.cos(2 * Math.PI * distance / radius);
+				const sinc = distance === 0 ? 2 * cutoff : Math.sin(2 * Math.PI * cutoff * distance) / (Math.PI * distance);
+				kernel[k + radius] = sinc * window;
+				sum += kernel[k + radius];
+			}
+			for (let k = 0; k < kernel.length; k++) kernel[k] /= sum;
+			kernels.set(phase, kernel);
+		}
+		let value = 0;
+		for (let k = Math.max(-radius, -index); k <= Math.min(radius, samples.length - 1 - index); k++) value += samples[index + k] * kernel[k + radius];
+		signal[i] = value;
+	}
+	return signal;
+}
+
 export function extractAudioMelodyContour(samples, sampleRate, { minMidi = 36, maxMidi = 96, hopSec = 0.01 } = {}) {
 	if (!samples.length || !(sampleRate > 0) || !(hopSec > 0) || maxMidi < minMidi) return [];
 	const rate = Math.min(22050, sampleRate);
 	const size = 2 ** Math.round(Math.log2(rate * 0.075));
 	const hop = Math.max(1, Math.round(rate * hopSec));
-	const length = Math.floor(samples.length * rate / sampleRate);
-	const signal = new Float32Array(length);
-	for (let i = 0; i < length; i++) {
-		const position = i * sampleRate / rate, index = Math.floor(position), fraction = position - index;
-		signal[i] = samples[index] * (1 - fraction) + (samples[index + 1] ?? samples[index]) * fraction;
-	}
+	const signal = resampleForMelody(samples, sampleRate, rate);
+	const length = signal.length;
 	const window = Float64Array.from({ length: size }, (_, i) => 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (size - 1)));
 	const real = new Float64Array(size), imaginary = new Float64Array(size), magnitudes = new Float64Array(size / 2);
 	const bins = Math.floor((maxMidi - minMidi) * 10) + 1;
