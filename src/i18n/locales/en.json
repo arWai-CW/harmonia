@@ -46,6 +46,7 @@
     "chord": "Chords"
   },
 	"midi": {
+		"audio": {"load":"Load audio","melody":"Audio melody","idle":"Audio optional · aligned at time 0","analysing":"Analysing audio…","ready":"Audio melody ready","error":"Could not analyse audio. Try a WAV or MP3 file.","playback":"Playback","all":"All","melodyOnly":"Melody only","accompaniment":"Accompaniment only"},
 		"extraction": {"autoExtract":"Auto (extract)","hint":"Click a note to toggle melody. Dashed outlines indicate low confidence.","toggle":"Toggle melody: {{note}}"},
 		"harmony": {"autoKey":"Auto key","melody":"Melody track","none":"None","major":"major","minor":"minor","ii-V":"ii–V","ii-subV":"ii–SubV","V-I":"V–I","subV-I":"SubV","backdoor":"Backdoor"},
     "title": "MIDI analysis",

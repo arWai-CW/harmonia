@@ -27,6 +27,7 @@ import {
 } from "./midi-utils.js";
 import { t } from "./i18n/index.js";
 import { labelMelodyNotes, suggestMelodyTrack } from "./harmony-analysis.js";
+import { filterPlaybackNotes } from "./audio-melody.js";
 
 const MIDI_ROLE_LEGEND = [
 	{ role: "root", color: "#1b1d20" },
@@ -530,6 +531,7 @@ const pumpMidiSchedule = (state) => {
 	const playback = state.midiPlayback;
 	if (!playback.playing || !state.midi) return;
 	const notes = state.midi.notes;
+	const allowed = new Set(filterPlaybackNotes(notes, state.midiPlaybackMode, state.midiMelodyTrack, state.midi.melodyExtraction?.melody).map((note) => note.id));
 	const position = getMidiPosition(state);
 	const horizon = position + MIDI_LOOKAHEAD_SECONDS;
 	const context = playback.audioContext;
@@ -538,6 +540,7 @@ const pumpMidiSchedule = (state) => {
 		const note = notes[playback.cursor];
 		if (note.startTime > horizon) break;
 		playback.cursor += 1;
+		if (!allowed.has(note.id)) continue;
 		const start = Math.max(note.startTime, position);
 		if (note.endTime <= start + 0.01) continue;
 		const when =
@@ -1102,6 +1105,10 @@ export const createMidiPanel = (state) => {
 	state.midiAutoKey = true;
 	state.midiMelodyTrack = null;
 	state.midiMelodyOverrides = new Map();
+	state.midiPlaybackMode = "all";
+	let audioCues = null;
+	let audioWorker = null;
+	let audioGeneration = 0;
 	const controls = document.createElement("div");
 	controls.className = "midi-harmony-controls";
 	const autoLabel = document.createElement("label");
@@ -1126,6 +1133,104 @@ export const createMidiPanel = (state) => {
 	extractionHint.hidden = true;
 	controls.append(extractionHint);
 	ui.midiTracks.before(controls);
+	const audioControls = document.createElement("div");
+	audioControls.className = "midi-harmony-controls";
+	audioControls.hidden = true;
+	const localized = (tag, key) => {
+		const element = document.createElement(tag);
+		element.dataset.i18n = `midi.audio.${key}`;
+		element.textContent = t(`midi.audio.${key}`);
+		return element;
+	};
+	const loadAudio = localized("button", "load");
+	loadAudio.type = "button";
+	loadAudio.className = "midi-file-button";
+	loadAudio.id = "midi-load-audio";
+	const audioInput = document.createElement("input");
+	audioInput.type = "file";
+	audioInput.id = "midi-audio-file";
+	audioInput.accept = ".wav,.mp3,audio/wav,audio/mpeg";
+	audioInput.hidden = true;
+	const audioName = document.createElement("span");
+	audioName.id = "midi-audio-name";
+	const audioLabel = document.createElement("label");
+	const audioToggle = document.createElement("input");
+	audioToggle.type = "checkbox";
+	audioToggle.id = "midi-audio-enabled";
+	audioToggle.disabled = true;
+	audioLabel.append(audioToggle, localized("span", "melody"));
+	const audioStatus = localized("span", "idle");
+	audioStatus.setAttribute("role", "status");
+	const playbackLabel = document.createElement("label");
+	const playbackMode = document.createElement("select");
+	playbackMode.id = "midi-playback-mode";
+	for (const mode of ["all", "melody", "accompaniment"]) {
+		const option = localized("option", mode === "melody" ? "melodyOnly" : mode);
+		option.value = mode;
+		playbackMode.append(option);
+	}
+	playbackLabel.append(localized("span", "playback"), playbackMode);
+	audioControls.append(loadAudio, audioInput, audioName, audioLabel, audioStatus, playbackLabel);
+	controls.after(audioControls);
+	loadAudio.addEventListener("click", () => audioInput.click());
+	const setAudioStatus = (key) => {
+		audioStatus.dataset.i18n = `midi.audio.${key}`;
+		audioStatus.textContent = t(`midi.audio.${key}`);
+	};
+	audioToggle.addEventListener("change", () => refreshMidiView(true));
+	playbackMode.addEventListener("change", () => {
+		stopMidiPlayback(ui, state, false);
+		state.midiPlaybackMode = playbackMode.value;
+	});
+	audioInput.addEventListener("change", async () => {
+		const file = audioInput.files?.[0];
+		audioInput.value = "";
+		if (!file || !state.midiSource) return;
+		const generation = ++audioGeneration;
+		audioWorker?.terminate();
+		audioCues = null;
+		audioToggle.checked = false;
+		audioToggle.disabled = true;
+		audioName.textContent = file.name;
+		setAudioStatus("analysing");
+		refreshMidiView(true);
+		let context;
+		try {
+			const AudioContext = window.AudioContext ?? window.webkitAudioContext;
+			context = new AudioContext();
+			const buffer = await context.decodeAudioData(await file.arrayBuffer());
+			if (generation !== audioGeneration) return;
+			const samples = new Float32Array(buffer.length);
+			for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+				const data = buffer.getChannelData(channel);
+				for (let i = 0; i < samples.length; i++) samples[i] += data[i] / buffer.numberOfChannels;
+			}
+			const worker = new Worker(new URL("./audio-melody-worker.js", import.meta.url), { type: "module" });
+			audioWorker = worker;
+			const fail = () => {
+				worker.terminate();
+				if (generation !== audioGeneration) return;
+				audioWorker = null;
+				setAudioStatus("error");
+			};
+			worker.onerror = fail;
+			worker.onmessage = ({ data }) => {
+				if (generation !== audioGeneration) return;
+				if (data.error) { fail(); return; }
+				worker.terminate(); audioWorker = null;
+				audioCues = { audioMelody: data.melody, loudness: data.loudness };
+				audioToggle.disabled = false;
+				audioToggle.checked = true;
+				setAudioStatus("ready");
+				refreshMidiView(true);
+			};
+			worker.postMessage({ samples, sampleRate: buffer.sampleRate, notes: state.midiSource.notes }, [samples.buffer]);
+		} catch {
+			if (generation === audioGeneration) setAudioStatus("error");
+		} finally {
+			if (context) await context.close();
+		}
+	});
 	auto.addEventListener("change", () => { state.midiAutoKey = auto.checked; refreshMidiView(); });
 	melodySelect.addEventListener("change", () => {
 		state.midiMelodyTrack = melodySelect.value === "" ? null : melodySelect.value === "auto" ? "auto" : Number(melodySelect.value);
@@ -1153,7 +1258,7 @@ export const createMidiPanel = (state) => {
 
 	const refreshMidiView = (stopPlayback = false) => {
 		if (!state.midiSource) return;
-		if (stopPlayback) stopMidiPlayback(ui, state);
+		if (stopPlayback || (state.midiPlayback.playing && state.midiPlaybackMode !== "all")) stopMidiPlayback(ui, state);
 		const keyDefinition = getKeyDefinition(state.keyRoot, state.keyMode);
 		const view = filterMidiView(
 			state.midiSource,
@@ -1161,6 +1266,7 @@ export const createMidiPanel = (state) => {
 			keyDefinition,
 			state.midiMelodyTrack,
 			state.midiMelodyOverrides,
+			audioToggle.checked && audioCues ? audioCues : {},
 		);
 		state.midi = view;
 		if (!view.segments.some((segment) => segment.id === state.midiSelectedId)) {
@@ -1203,6 +1309,14 @@ export const createMidiPanel = (state) => {
 				throw new MidiFileError(t("midi.status.noTracks"));
 			}
 			state.midiSource = source;
+			audioGeneration++;
+			audioWorker?.terminate(); audioWorker = null;
+			audioCues = null;
+			audioToggle.checked = false; audioToggle.disabled = true;
+			audioName.textContent = "";
+			setAudioStatus("idle");
+			audioControls.hidden = false;
+			state.midiPlaybackMode = "all"; playbackMode.value = "all";
 			state.midiMelodyTrack = suggestMelodyTrack(source.notes);
 			state.midiMelodyOverrides = new Map();
 			extractionHint.hidden = true;
