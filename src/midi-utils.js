@@ -1,5 +1,6 @@
 import { Midi } from "@tonejs/midi";
 import { Chord, Note } from "tonal";
+import { detectKeyRegions, findTwoFiveChains, nameArpeggioChords } from "./harmony-analysis.js";
 
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 const MAX_NOTES = 20000;
@@ -13,7 +14,7 @@ export class MidiFileError extends Error {
 	}
 }
 
-const CHORD_TEMPLATES = [
+export const CHORD_TEMPLATES = [
 	{ symbol: "maj13", intervals: ["1P", "3M", "5P", "7M", "9M", "13M"] },
 	{ symbol: "13b9", intervals: ["1P", "3M", "5P", "7m", "9m", "13M"] },
 	{ symbol: "13", intervals: ["1P", "3M", "5P", "7m", "9M", "13M"] },
@@ -312,7 +313,7 @@ const matchTemplate = (pitchClasses, bassPitchClass, keyDefinition) => {
 	})[0];
 };
 
-const identifyChord = (pitchClasses, bassPitchClass, keyDefinition) => {
+export const identifyChord = (pitchClasses, bassPitchClass, keyDefinition) => {
 	const templateMatch = matchTemplate(pitchClasses, bassPitchClass, keyDefinition);
 	if (templateMatch) {
 		const { template } = templateMatch;
@@ -530,124 +531,14 @@ const buildSegments = (notes, ppq, keyDefinition) => {
 	return mergeSegments(segments, ppq);
 };
 
-const buildArpeggioSegments = (notes, chordSegments, barDuration, ppq) => {
-	if (!barDuration || barDuration <= 0) {
-		return [];
-	}
 
-	// A broken chord is only marked when three chord tones overlap but never
-	// attack together. This keeps ordinary melodies out of the timeline.
-	// shortcut: staccato arpeggios (each note released before the next starts) are not marked.
-	const used = new Set(chordSegments.flatMap((segment) => segment.noteIds));
-	const groups = new Map();
-	notes.forEach((note) => {
-		if (used.has(note.id)) return;
-		const bar = Math.floor((note.startTime + 0.0001) / barDuration);
-		const key = `${note.trackIndex}:${bar}`;
-		if (!groups.has(key)) groups.set(key, { bar, notes: [] });
-		groups.get(key).notes.push(note);
-	});
-
-	const markers = [];
-	for (const { bar, notes: group } of groups.values()) {
-		const events = group.flatMap((note) => [
-			{ time: note.startTime, type: 1, note },
-			{ time: note.endTime, type: -1, note },
-		]);
-		events.sort((a, b) => a.time - b.time || b.type - a.type);
-
-		const activePitchClasses = new Map();
-		const activeNotes = new Set();
-		const spans = [];
-		let overlapStart = null;
-		for (const event of events) {
-			if (event.type === 1) {
-				const pitchClass = event.note.midi % 12;
-				activePitchClasses.set(
-					pitchClass,
-					(activePitchClasses.get(pitchClass) ?? 0) + 1,
-				);
-				activeNotes.add(event.note);
-			} else {
-				const pitchClass = event.note.midi % 12;
-				const count = (activePitchClasses.get(pitchClass) ?? 1) - 1;
-				if (count <= 0) activePitchClasses.delete(pitchClass);
-				else activePitchClasses.set(pitchClass, count);
-				activeNotes.delete(event.note);
-			}
-
-			if (activePitchClasses.size >= 3 && overlapStart === null) {
-				overlapStart = event.time;
-			}
-			if (activePitchClasses.size < 3 && overlapStart !== null) {
-				spans.push({ start: overlapStart, end: event.time });
-				overlapStart = null;
-			}
-		}
-
-		const barStart = bar * barDuration;
-		const barEnd = barStart + barDuration;
-		const mergedSpans = [];
-		spans.forEach((span) => {
-			const last = mergedSpans[mergedSpans.length - 1];
-			if (last && span.start - last.end < 0.12) {
-				last.end = span.end;
-			} else {
-				mergedSpans.push({ ...span });
-			}
-		});
-		mergedSpans.forEach((span) => {
-			const start = Math.max(span.start, barStart);
-			const end = Math.min(span.end, barEnd);
-			if (end - start < 0.1) return;
-			if (
-				chordSegments.some(
-					(segment) => start < segment.endTime && end > segment.startTime,
-				)
-			) {
-				return;
-			}
-			const segmentNotes = group.filter(
-				(note) => note.startTime < end && note.endTime > start,
-			);
-			if (segmentNotes.length < 3) return;
-			const pitchClasses = [
-				...new Set(segmentNotes.map((note) => note.midi % 12)),
-			].sort((a, b) => a - b);
-			if (pitchClasses.length < 3) return;
-			const tail = segmentNotes.reduce((latest, note) =>
-				note.startTime >= latest.startTime ? note : latest,
-			);
-			const markerStart = Math.min(
-				start,
-				...segmentNotes.map((note) => note.startTime),
-			);
-			markers.push({
-				id: `a${markers.length}`,
-				startTick: Math.round(markerStart * ppq),
-				endTick: Math.round(end * ppq),
-				startTime: markerStart,
-				endTime: end,
-				noteIds: segmentNotes.map((note) => note.id),
-				pitchClasses,
-				arpeggio: true,
-				tailNoteId: tail.id,
-				chord: null,
-			});
-		});
-	}
-	return markers;
-};
-
-const buildSections = (notes, ppq, keyDefinition, barDuration) => {
-	const chordSegments = buildSegments(notes, ppq, keyDefinition);
-	const arpeggioSegments = buildArpeggioSegments(
-		notes,
-		chordSegments,
-		barDuration,
-		ppq,
-	);
-	return [...chordSegments, ...arpeggioSegments].sort(
+const buildSections = (notes, ppq, keyDefinition, barDuration, bars, melodyTrackIndex = null) => {
+	const harmonyNotes = notes.filter((n) => n.trackIndex !== melodyTrackIndex);
+	const candidates = buildSegments(harmonyNotes, ppq, keyDefinition);
+	const chordSegments = candidates.filter((segment) => segment.pitchClasses.length >= 3);
+	const arpeggioSegments = nameArpeggioChords(harmonyNotes, chordSegments, bars, barDuration, ppq, keyDefinition);
+	const dyads = candidates.filter((segment) => segment.pitchClasses.length < 3 && !arpeggioSegments.some((arp) => segment.startTime < arp.endTime && segment.endTime > arp.startTime));
+	return [...chordSegments, ...dyads, ...arpeggioSegments].sort(
 		(a, b) => a.startTime - b.startTime || Number(a.arpeggio) - Number(b.arpeggio),
 	);
 };
@@ -722,7 +613,7 @@ export async function parseMidiFile(file, keyDefinition) {
 	const timeSignature = Array.isArray(signature) && signature.length === 2 ? signature : [4, 4];
 	const totalTicks = notes.length ? Math.max(...notes.map((note) => note.endTick)) : 0;
 	const { bars, barDuration } = buildBars(midi, timeSignature, totalTicks);
-	const segments = buildSections(notes, ppq, keyDefinition, barDuration);
+	const segments = buildSections(notes, ppq, keyDefinition, barDuration, bars);
 	const noteEnd = notes.length ? Math.max(...notes.map((note) => note.endTime)) : 0;
 
 	return {
@@ -742,10 +633,12 @@ export async function parseMidiFile(file, keyDefinition) {
 			}))
 			.filter((track) => track.noteCount > 0),
 		segments,
+		keyRegions: detectKeyRegions(notes, bars, barDuration),
+		twoFiveChains: findTwoFiveChains(segments),
 	};
 }
 
-export function filterMidiView(view, enabledTracks, keyDefinition) {
+export function filterMidiView(view, enabledTracks, keyDefinition, melodyTrackIndex = null) {
 	const enabled = new Set(enabledTracks);
 	const notes = view.notes
 		.filter((note) => enabled.has(note.trackIndex))
@@ -755,10 +648,14 @@ export function filterMidiView(view, enabledTracks, keyDefinition) {
 		view.ppq,
 		keyDefinition,
 		view.barDuration,
+		view.bars,
+		melodyTrackIndex,
 	);
 	return {
 		...view,
 		notes,
 		segments,
+		keyRegions: detectKeyRegions(notes, view.bars, view.barDuration),
+		twoFiveChains: findTwoFiveChains(segments),
 	};
 }

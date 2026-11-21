@@ -149,7 +149,7 @@ export async function runMidiUtilsTests() {
 			assertEqual(symbols(filterMidiView(view, [0, 1], KEY)), ["C", "G"], "two tracks");
 			assertEqual(filterMidiView(view, [0], KEY).notes.length, 3, "piano note count");
 		}),
-		await test("分解和弦先標記為未判定", async () => {
+		await test("分解和弦會標記並命名", async () => {
 			const midi = new Midi();
 			midi.header.setTempo(120);
 			const track = midi.addTrack();
@@ -159,7 +159,7 @@ export async function runMidiUtilsTests() {
 			const view = await parseMidiFile(createFile("arp.mid", midi.toArray()), KEY);
 			assertEqual(view.segments.length, 1, "one arpeggio segment");
 			assert(view.segments[0].arpeggio === true, "marked as arpeggio");
-			assertEqual(view.segments[0].chord, null, "no chord guessed");
+			assertEqual(view.segments[0].chord.symbol, "C", "named broken chord");
 			assertEqual(view.segments[0].pitchClasses.length, 3, "three pitch classes");
 		}),
 		await test("單音旋律不會被標成分解和弦", async () => {

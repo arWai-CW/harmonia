@@ -26,6 +26,7 @@ import {
 	parseMidiFile,
 } from "./midi-utils.js";
 import { t } from "./i18n/index.js";
+import { labelMelodyNotes, suggestMelodyTrack } from "./harmony-analysis.js";
 
 const MIDI_ROLE_LEGEND = [
 	{ role: "root", color: "#1b1d20" },
@@ -58,7 +59,7 @@ const MIDI_MIN_ZOOM = 1;
 const MIDI_MAX_ZOOM = 4;
 const MIDI_CHORD_MIN_WIDTH = 44;
 const MIDI_CHORD_CHAR_WIDTH = 7.2;
-const MIDI_CHORD_TOP = 30;
+const MIDI_CHORD_TOP = 86;
 const MIDI_CHORD_LANE_HEIGHT = 34;
 const MIDI_CHORD_MAX_LANES = 4;
 const MIDI_CHORD_GAP = 0;
@@ -138,7 +139,7 @@ const renderMidiDetail = (ui, view, segment, keyDefinition) => {
 		return;
 	}
 
-	if (segment.arpeggio) {
+	if (segment.arpeggio && !segment.chord) {
 		const barIndex = getMidiBarIndex(view.bars, segment.startTime);
 		const head = document.createElement("div");
 		head.className = "midi-detail__head";
@@ -644,6 +645,10 @@ const stopMidiPlayback = (ui, state, reset = true) => {
 
 const renderMidiView = (ui, state, keyDefinition) => {
 	const view = state.midi;
+	const keyAt = (time) => {
+		const region = state.midiAutoKey !== false && view?.keyRegions.find((r) => time >= r.startTime && time < r.endTime);
+		return region ? getKeyDefinition(region.root, region.mode) : keyDefinition;
+	};
 	if (!view) {
 		ui.midiEmpty.hidden = false;
 		ui.midiView.hidden = true;
@@ -714,7 +719,7 @@ const renderMidiView = (ui, state, keyDefinition) => {
 	const rollHeight = narrow
 		? clamp(pitchRange * 5, 180, 280)
 		: clamp(pitchRange * 7, 240, 340);
-	const rowHeight = rollHeight / pitchRange;
+	const rowHeight = Math.max(state.midiMelodyTrack === null ? 0 : 12, rollHeight / pitchRange);
 	const contentHeight = Math.round(pitchRange * rowHeight);
 	ui.midiAxis.style.height = `${contentHeight}px`;
 	ui.midiRollScroll.style.height = `${contentHeight}px`;
@@ -732,9 +737,27 @@ const renderMidiView = (ui, state, keyDefinition) => {
 		ruler.append(label);
 	});
 	ui.midiRibbonInner.append(ruler);
+	view.keyRegions.forEach((region) => {
+		const lane = document.createElement("div");
+		lane.className = "midi-key-region";
+		lane.style.left = `${MIDI_PADDING + region.startTime * pixelsPerSecond}px`;
+		lane.style.width = `${(region.endTime - region.startTime) * pixelsPerSecond - 2}px`;
+		lane.textContent = `${region.root} ${t(`midi.harmony.${region.mode}`)}`;
+		ui.midiRibbonInner.append(lane);
+	});
+	view.twoFiveChains.forEach((pattern) => {
+		const bracket = document.createElement("div");
+		bracket.className = "midi-harmony-bracket";
+		bracket.style.left = `${MIDI_PADDING + pattern.startTime * pixelsPerSecond}px`;
+		bracket.style.width = `${Math.max(20, (pattern.endTime - pattern.startTime) * pixelsPerSecond - 2)}px`;
+		bracket.style.borderStyle = pattern.resolved ? "solid" : "dashed";
+		bracket.style.color = MIDI_TRACK_COLORS[pattern.chainId % MIDI_TRACK_COLORS.length];
+		bracket.textContent = `${t(`midi.harmony.${pattern.type}`)} → ${pattern.targetRoot}`;
+		ui.midiRibbonInner.append(bracket);
+	});
 
 	const chordBoxes = view.segments.map((segment) => {
-		const label = segment.arpeggio ? t("midi.arpeggio.short") : segment.chord.symbol;
+		const label = segment.chord?.symbol ?? t("midi.arpeggio.short");
 		const start = MIDI_PADDING + segment.startTime * pixelsPerSecond;
 		const actualWidth = Math.max(
 			2,
@@ -778,13 +801,13 @@ const renderMidiView = (ui, state, keyDefinition) => {
 	)}px`;
 
 	chordBoxes.forEach(({ segment, start, actualWidth, width, lane }) => {
-		const isArpeggio = Boolean(segment.arpeggio);
+		const isArpeggio = Boolean(segment.arpeggio && !segment.chord);
 		const label = isArpeggio ? t("midi.arpeggio.short") : segment.chord.symbol;
 		const chordFunction = isArpeggio
 			? null
 			: analyzeChordFunction(
 					segment.chord.symbol,
-					keyDefinition,
+					keyAt(segment.startTime),
 					segment.chord.intervals,
 				);
 		const color = isArpeggio
@@ -937,6 +960,7 @@ const renderMidiView = (ui, state, keyDefinition) => {
 
 	const selectedNoteIds = new Set(selected?.noteIds ?? []);
 	const showNoteTitles = view.notes.length <= 4000;
+	const melodyLabels = labelMelodyNotes(view.notes, view.segments, state.midiMelodyTrack, view.ppq, view.barDuration);
 	view.notes.forEach((note) => {
 		const selectedNote = selectedNoteIds.has(note.id);
 		const baseNote =
@@ -977,6 +1001,14 @@ const renderMidiView = (ui, state, keyDefinition) => {
 			rect.append(title);
 		}
 		svg.append(rect);
+		const melody = melodyLabels.get(note.id);
+		if (melody) {
+			rect.setAttribute("opacity", "0.95");
+			rect.setAttribute("fill", ({ chord: "#0f766e", tension: "#b45309", passing: "#6d28d9" })[melody.kind]);
+			const text = createSvgElement("text", { x: MIDI_PADDING + note.startTime * pixelsPerSecond + 2, y: (maxPitch - note.midi) * rowHeight + rowHeight - 2, fill: "white", "font-size": Math.max(9, rowHeight - 2), "pointer-events": "none" });
+			text.textContent = melody.label;
+			svg.append(text);
+		}
 	});
 	ui.midiRollContent.append(svg);
 	const ribbonPlayhead = document.createElement("div");
@@ -1002,7 +1034,13 @@ const renderMidiView = (ui, state, keyDefinition) => {
 	}
 	ui.midiAxisInner.style.height = `${contentHeight}px`;
 
-	renderMidiDetail(ui, view, selected, keyDefinition);
+	renderMidiDetail(ui, view, selected, keyAt(selected?.startTime ?? 0));
+	if (selected && melodyLabels.size) {
+		const melody = document.createElement("p");
+		melody.className = "midi-detail__melody";
+		melody.textContent = `${t("midi.harmony.melody")}: ` + view.notes.filter((n) => n.startTime >= selected.startTime && n.startTime < selected.endTime && melodyLabels.has(n.id)).map((n) => `${midiNoteName(n.midi, keyAt(n.startTime))} (${melodyLabels.get(n.id).label})`).join(" · ");
+		ui.midiDetail.append(melody);
+	}
 
 	ui.midiRollScroll.scrollLeft = previousLeft;
 	ui.midiRollScroll.scrollTop = previousTop;
@@ -1044,6 +1082,29 @@ const getMidiElements = () => ({
 
 export const createMidiPanel = (state) => {
 	const ui = getMidiElements();
+	state.midiAutoKey = true;
+	state.midiMelodyTrack = null;
+	const controls = document.createElement("div");
+	controls.className = "midi-harmony-controls";
+	const autoLabel = document.createElement("label");
+	const auto = document.createElement("input");
+	auto.type = "checkbox";
+	auto.checked = true;
+	const autoText = document.createElement("span");
+	autoText.dataset.i18n = "midi.harmony.autoKey";
+	autoText.textContent = t("midi.harmony.autoKey");
+	autoLabel.append(auto, autoText);
+	const melodyLabel = document.createElement("label");
+	const melodyText = document.createElement("span");
+	melodyText.dataset.i18n = "midi.harmony.melody";
+	melodyText.textContent = t("midi.harmony.melody");
+	const melodySelect = document.createElement("select");
+	melodySelect.id = "midi-melody-track";
+	melodyLabel.append(melodyText, melodySelect);
+	controls.append(autoLabel, melodyLabel);
+	ui.midiTracks.before(controls);
+	auto.addEventListener("change", () => { state.midiAutoKey = auto.checked; refreshMidiView(); });
+	melodySelect.addEventListener("change", () => { state.midiMelodyTrack = melodySelect.value === "" ? null : Number(melodySelect.value); refreshMidiView(); });
 
 	const setMidiStatus = (message, isError = false) => {
 		ui.midiStatus.textContent = message;
@@ -1058,6 +1119,7 @@ export const createMidiPanel = (state) => {
 			state.midiSource,
 			state.midiEnabledTracks,
 			keyDefinition,
+			state.midiMelodyTrack,
 		);
 		state.midi = view;
 		if (!view.segments.some((segment) => segment.id === state.midiSelectedId)) {
@@ -1100,6 +1162,17 @@ export const createMidiPanel = (state) => {
 				throw new MidiFileError(t("midi.status.noTracks"));
 			}
 			state.midiSource = source;
+			state.midiMelodyTrack = suggestMelodyTrack(source.notes);
+			const none = document.createElement("option");
+			none.value = "";
+			none.dataset.i18n = "midi.harmony.none";
+			none.textContent = t("midi.harmony.none");
+			melodySelect.replaceChildren(none, ...source.tracks.map((track) => {
+				const option = document.createElement("option");
+				option.value = String(track.index); option.textContent = track.name;
+				return option;
+			}));
+			melodySelect.value = state.midiMelodyTrack === null ? "" : String(state.midiMelodyTrack);
 			state.midiFile = file;
 			state.midiEnabledTracks = new Set(
 				source.tracks.map((track) => track.index),
