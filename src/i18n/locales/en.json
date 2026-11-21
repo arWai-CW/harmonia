@@ -45,7 +45,8 @@
   "tabs": {
     "chord": "Chords"
   },
-  "midi": {
+	"midi": {
+		"harmony": {"autoKey":"Auto key","melody":"Melody track","none":"None","major":"major","minor":"minor","ii-V":"ii–V","ii-subV":"ii–SubV","V-I":"V–I","subV-I":"SubV","backdoor":"Backdoor"},
     "title": "MIDI analysis",
     "hint": "Read the skeleton and extensions, then compare the timeline with the notes.",
     "open": "Open MIDI",

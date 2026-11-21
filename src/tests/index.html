@@ -54,11 +54,13 @@
 			import { runChordUtilsTests } from "./chord-utils.test.js";
 			import { runChordFunctionTests } from "./chord-function.test.js";
 			import { runMidiUtilsTests } from "./midi-utils.test.js";
+			import { runHarmonyAnalysisTests } from "./harmony-analysis.test.js";
 
 			const allResults = [
 				...runChordUtilsTests(),
 				...runChordFunctionTests(),
 				...(await runMidiUtilsTests()),
+				...runHarmonyAnalysisTests(),
 			];
 			const container = document.getElementById("results");
 
