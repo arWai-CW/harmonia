@@ -33,6 +33,7 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 	for (let i = 0; i < clusters.length; i++) {
 		const cluster = clusters[i];
 		const previous = clusters[i - 1];
+		const reset = previous && cluster.time - previous.time >= (barDuration ?? secondsPerBeat * 4);
 		const pitches = cluster.notes.map((note) => note.midi);
 		const low = Math.min(...pitches), high = Math.max(...pitches);
 		cluster.states = [...cluster.notes, null].map((note) => {
@@ -47,7 +48,7 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 			return { note, emission };
 		});
 		cluster.edges = cluster.states.map((state) => previous?.states.map((from) => {
-			if (cluster.time - previous.time >= (barDuration ?? secondsPerBeat * 4)) return 0;
+			if (reset) return 0;
 			if (!state.note) return from.note ? 0.2 : 0;
 			if (from.lastPitch === undefined) return 0.15;
 			const leap = Math.abs(state.note.midi - from.lastPitch);
@@ -65,7 +66,7 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 			}
 			state.score = best + state.emission;
 			state.parent = parent;
-			const from = previous?.states[parent];
+			const from = reset ? undefined : previous?.states[parent];
 			state.lastPitch = state.note?.midi ?? from?.lastPitch;
 			state.register = state.note ? (from?.register === undefined ? state.note.midi : from.register * 0.65 + state.note.midi * 0.35) : from?.register;
 		});

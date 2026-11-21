@@ -22,6 +22,21 @@ export function createHandSwapNotes() {
 export function runMelodyExtractionTests() {
 	const options = { ppq: 480, barDuration: 2 };
 	return [
+		test("A phrase after a long rest is independent of the preceding register", () => {
+			const phrase = [
+				{ id: "phrase0", midi: 60, startTime: 4, endTime: 4.5 },
+				{ id: "phrase1", midi: 60, startTime: 4.5, endTime: 5 },
+				{ id: "comp1", midi: 67, startTime: 4.5, endTime: 5 },
+			];
+			const extract = (prefix) => [...extractMelodyLine([...prefix, ...phrase], options).melody]
+				.filter(([id]) => id !== "prefix").sort(([a], [b]) => a.localeCompare(b));
+			const expected = extract([]);
+			for (const midi of [24, 108]) {
+				const actual = extract([{ id: "prefix", midi, startTime: 0, endTime: 0.5 }]);
+				assert(JSON.stringify(actual.map(([id]) => id)) === JSON.stringify(expected.map(([id]) => id)), "same melody after high or low prefix");
+				assert(actual.every(([, value], i) => Math.abs(value.confidence - expected[i][1].confidence) < 1e-10), "same confidence after phrase reset");
+			}
+		}),
 		test("Small onset offsets stay in one cluster with low confidence for ambiguous lines", () => {
 			const notes = [60, 72].map((midi, i) => ({ id: `ambiguous${i}`, midi, startTime: i * 0.01, endTime: i * 0.01 + 0.5, velocity: 100 / 127 }));
 			const result = extractMelodyLine(notes, { beatDuration: 0.5 });
