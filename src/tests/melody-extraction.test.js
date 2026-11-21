@@ -22,6 +22,27 @@ export function createHandSwapNotes() {
 export function runMelodyExtractionTests() {
 	const options = { ppq: 480, barDuration: 2 };
 	return [
+		test("A sustained melody does not absorb later accompaniment arpeggios", () => {
+			for (const delay of [0.25, 2.25]) {
+				const notes = [
+					{ id: "held", midi: 72, startTime: 0, endTime: delay + 1.75 },
+					...[60, 64, 67, 64].map((midi, i) => ({ id: `arp${i}`, midi, startTime: delay + i * 0.4, endTime: delay + 0.2 + i * 0.4 })),
+				];
+				const selected = [...extractMelodyLine(notes, { beatDuration: 0.5, barDuration: 2 }).melody.keys()];
+				assert(selected.length === 1 && selected[0] === "held", JSON.stringify(selected));
+				const source = {
+					notes: notes.map((note) => ({ ...note, trackIndex: 0, startTick: Math.round(note.startTime * 960), endTick: Math.round(note.endTime * 960), velocity: 100 / 127 })),
+					ppq: 480, barDuration: 2, bars: [0, 1].map((i) => ({ index: i + 1, time: i * 2, tick: i * 1920 })),
+				};
+				const view = filterMidiView(source, [0], getKeyDefinition("C", "major"), "auto");
+				assert(view.segments.some((segment) => segment.chord?.root === "C"), "arpeggiated harmony remains after melody exclusion");
+			}
+		}),
+		test("Normal legato overlap retains successive melody attacks", () => {
+			const notes = [72, 74, 76, 77].map((midi, i) => ({ id: `legato${i}`, midi, startTime: i * 0.5, endTime: i * 0.5 + 0.58 }));
+			const result = extractMelodyLine(notes, { beatDuration: 0.5, barDuration: 2 });
+			assert(notes.every((note) => result.melody.has(note.id)), JSON.stringify([...result.melody.keys()]));
+		}),
 		test("A phrase after a long rest is independent of the preceding register", () => {
 			const phrase = [
 				{ id: "phrase0", midi: 60, startTime: 4, endTime: 4.5 },
