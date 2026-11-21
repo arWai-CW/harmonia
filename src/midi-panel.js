@@ -29,6 +29,8 @@ import { t } from "./i18n/index.js";
 import { labelMelodyNotes, suggestMelodyTrack } from "./harmony-analysis.js";
 import { filterPlaybackNotes } from "./audio-melody.js";
 import { buildStylePreview, buildStylePreviewMidi } from "./style-preview.js";
+import { anchoredScrollLeft, followScrollLeft, timeAtX, wheelZoom } from "./midi-transport.js";
+import { persistState } from "./state.js";
 
 const MIDI_ROLE_LEGEND = [
 	{ role: "root", color: "#1b1d20" },
@@ -566,7 +568,9 @@ const tickMidiPlayback = (ui, state) => {
 
 	const x = MIDI_PADDING + position * state.midiPixelsPerSecond;
 	const scroll = ui.midiRollScroll;
-	if (x > scroll.scrollLeft + scroll.clientWidth - 36) {
+	if (state.midiFollowPlayhead) {
+		scroll.scrollLeft = followScrollLeft(position, state.midiPixelsPerSecond, scroll.clientWidth, scroll.scrollWidth, MIDI_PADDING);
+	} else if (x > scroll.scrollLeft + scroll.clientWidth - 36) {
 		scroll.scrollLeft = Math.min(
 			x - scroll.clientWidth * 0.25,
 			ui.midiRollContent.scrollWidth,
@@ -671,6 +675,7 @@ const renderMidiView = (ui, state, keyDefinition) => {
 	ui.midiEmpty.hidden = true;
 	ui.midiView.hidden = false;
 	ui.midiZoom.hidden = false;
+	ui.midiZoomValue.value = String(Math.round(state.midiZoom * 100) / 100);
 
 	const previousLeft = ui.midiRollScroll.scrollLeft;
 	const previousTop = ui.midiRollScroll.scrollTop;
@@ -737,6 +742,7 @@ const renderMidiView = (ui, state, keyDefinition) => {
 		label.className = "midi-ruler__bar";
 		label.style.left = `${MIDI_PADDING + bar.time * pixelsPerSecond}px`;
 		label.textContent = String(bar.index);
+		label.dataset.time = String(bar.time);
 		ruler.append(label);
 	});
 	ui.midiRibbonInner.append(ruler);
@@ -1097,6 +1103,7 @@ const getMidiElements = () => ({
 	midiZoom: document.querySelector("#midi-zoom"),
 	midiZoomIn: document.querySelector("#midi-zoom-in"),
 	midiZoomOut: document.querySelector("#midi-zoom-out"),
+	midiZoomValue: document.querySelector("#midi-zoom-value"),
 	midiPlay: document.querySelector("#midi-play"),
 	midiPlayLabel: document.querySelector("#midi-play .midi-transport__label"),
 	midiPlayIconPlay: document.querySelector(".midi-transport__icon--play"),
@@ -1107,7 +1114,7 @@ const getMidiElements = () => ({
 	midiTempoValue: document.querySelector("#midi-tempo-value"),
 });
 
-export const createMidiPanel = (state) => {
+export const createMidiPanel = (state, storage) => {
 	const ui = getMidiElements();
 	state.midiAutoKey = true;
 	state.midiMelodyTrack = null;
@@ -1118,7 +1125,7 @@ export const createMidiPanel = (state) => {
 	let audioWorker = null;
 	let audioGeneration = 0;
 	const controls = document.createElement("div");
-	controls.className = "midi-harmony-controls";
+	controls.className = "midi-controls";
 	const autoLabel = document.createElement("label");
 	const auto = document.createElement("input");
 	auto.type = "checkbox";
@@ -1141,9 +1148,6 @@ export const createMidiPanel = (state) => {
 	extractionHint.hidden = true;
 	controls.append(extractionHint);
 	ui.midiTracks.before(controls);
-	const audioControls = document.createElement("div");
-	audioControls.className = "midi-harmony-controls";
-	audioControls.hidden = true;
 	const localized = (tag, key) => {
 		const element = document.createElement(tag);
 		element.dataset.i18n = `midi.audio.${key}`;
@@ -1169,6 +1173,7 @@ export const createMidiPanel = (state) => {
 	audioLabel.append(audioToggle, localized("span", "melody"));
 	const audioStatus = localized("span", "idle");
 	audioStatus.setAttribute("role", "status");
+	audioStatus.hidden = true;
 	const playbackLabel = document.createElement("label");
 	const playbackMode = document.createElement("select");
 	playbackMode.id = "midi-playback-mode";
@@ -1178,7 +1183,6 @@ export const createMidiPanel = (state) => {
 		playbackMode.append(option);
 	}
 	playbackLabel.append(localized("span", "playback"), playbackMode);
-	audioControls.append(loadAudio, audioInput, audioName, audioLabel, audioStatus, playbackLabel);
 	const styleLabel = document.createElement("label");
 	const styleText = document.createElement("span");
 	styleText.dataset.i18n = "midi.style.label";
@@ -1199,7 +1203,6 @@ export const createMidiPanel = (state) => {
 	exportStyle.dataset.i18n = "midi.style.export";
 	exportStyle.textContent = t("midi.style.export");
 	exportStyle.disabled = true;
-	audioControls.append(styleLabel, exportStyle);
 	styleSelect.addEventListener("change", () => { state.midiStyle = styleSelect.value; refreshMidiView(true); });
 	exportStyle.addEventListener("click", () => {
 		if (!state.midiStylePreview) return;
@@ -1215,9 +1218,58 @@ export const createMidiPanel = (state) => {
 		link.click();
 		window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 	});
-	controls.after(audioControls);
+	const group = (key, ...children) => {
+		const fieldset = document.createElement("fieldset");
+		fieldset.className = `midi-controls__group midi-controls__group--${key}`;
+		const legend = document.createElement("legend");
+		legend.dataset.i18n = `midi.toolbar.${key}`;
+		legend.textContent = t(`midi.toolbar.${key}`);
+		const items = document.createElement("div");
+		items.className = "midi-controls__items";
+		items.append(...children);
+		fieldset.append(legend, items);
+		return fieldset;
+	};
+	const tooltip = (element, key) => {
+		element.dataset.i18nTitle = key;
+		element.title = t(key);
+	};
+	const followLabel = document.createElement("label");
+	const follow = document.createElement("input");
+	follow.type = "checkbox";
+	follow.id = "midi-follow";
+	follow.checked = state.midiFollowPlayhead;
+	const followText = document.createElement("span");
+	followText.dataset.i18n = "midi.toolbar.follow";
+	followText.textContent = t("midi.toolbar.follow");
+	followLabel.append(follow, followText);
+	const setFollow = (enabled) => {
+		state.midiFollowPlayhead = enabled;
+		follow.checked = enabled;
+		persistState(storage, state);
+	};
+	follow.addEventListener("change", () => setFollow(follow.checked));
+	for (const label of [autoLabel, audioLabel, followLabel]) {
+		label.classList.add("midi-switch");
+		label.querySelector("input").setAttribute("role", "switch");
+	}
+	tooltip(audioLabel, "midi.audio.idle");
+	tooltip(loadAudio, "midi.audio.idle");
+	tooltip(melodyLabel, "midi.extraction.hint");
+	tooltip(followLabel, "midi.toolbar.followHint");
+	tooltip(ui.midiZoom, "midi.toolbar.zoomHint");
+	tooltip(ui.midiRibbon, "midi.toolbar.seekHint");
+	tooltip(ui.midiPlay, "midi.toolbar.spaceHint");
+	extractionHint.className = "sr-only";
+	controls.replaceChildren(
+		group("analysis", autoLabel, melodyLabel, extractionHint),
+		group("audio", loadAudio, audioInput, audioLabel, audioName, audioStatus),
+		group("export", exportStyle),
+		group("playback", document.querySelector(".midi-transport"), playbackLabel, followLabel, styleLabel),
+	);
 	loadAudio.addEventListener("click", () => audioInput.click());
 	const setAudioStatus = (key) => {
+		audioStatus.hidden = key === "idle";
 		audioStatus.dataset.i18n = `midi.audio.${key}`;
 		audioStatus.textContent = t(`midi.audio.${key}`);
 	};
@@ -1286,7 +1338,7 @@ export const createMidiPanel = (state) => {
 		if (state.midiMelodyTrack !== "auto" || !state.midi) return;
 		const rect = event.target.closest("[data-note-id]");
 		if (!rect) return;
-		if (event.type === "keydown" && !["Enter", " "].includes(event.key)) return;
+		if (event.type === "keydown" && event.key !== "Enter") return;
 		event.preventDefault();
 		const id = rect.dataset.noteId;
 		state.midiMelodyOverrides.set(id, !state.midi.melodyExtraction.melody.has(id));
@@ -1366,7 +1418,6 @@ export const createMidiPanel = (state) => {
 			audioToggle.checked = false; audioToggle.disabled = true;
 			audioName.textContent = "";
 			setAudioStatus("idle");
-			audioControls.hidden = false;
 			state.midiPlaybackMode = "all"; playbackMode.value = "all";
 			state.midiStyle = "off"; styleSelect.value = "off";
 			state.midiMelodyTrack = suggestMelodyTrack(source.notes);
@@ -1472,38 +1523,65 @@ export const createMidiPanel = (state) => {
 		if (!button || !state.midi) return;
 		state.midiSelectedId = button.dataset.segmentId;
 		renderMidiView(ui, state, getKeyDefinition(state.keyRoot, state.keyMode));
-		const segment = state.midi.segments.find(
-			(item) => item.id === state.midiSelectedId,
-		);
-		if (segment) {
-			const left = MIDI_PADDING + segment.startTime * state.midiPixelsPerSecond;
-			const right =
-				left +
-				Math.max(
-					2,
-					(segment.endTime - segment.startTime) * state.midiPixelsPerSecond,
-				);
-			const scroll = ui.midiRollScroll;
-			if (
-				left < scroll.scrollLeft ||
-				right > scroll.scrollLeft + scroll.clientWidth
-			) {
-				scroll.scrollLeft = Math.max(0, left - 24);
-				syncMidiScroll(ui);
-			}
-		}
 		ui.midiRibbonInner
 			.querySelector(`[data-segment-id="${state.midiSelectedId}"]`)
 			?.focus({ preventScroll: true });
 	});
 
-	const zoom = (delta) => {
+	const zoom = (value, cursorX = ui.midiRollScroll.clientWidth / 2) => {
 		if (!state.midi) return;
-		state.midiZoom = clamp(state.midiZoom + delta, MIDI_MIN_ZOOM, MIDI_MAX_ZOOM);
+		const scroll = ui.midiRollScroll;
+		const oldScale = state.midiPixelsPerSecond;
+		const scrollLeft = scroll.scrollLeft;
+		state.midiZoom = clamp(value, MIDI_MIN_ZOOM, MIDI_MAX_ZOOM);
 		renderMidiView(ui, state, getKeyDefinition(state.keyRoot, state.keyMode));
+		scroll.scrollLeft = anchoredScrollLeft({ scrollLeft, cursorX, oldScale, newScale: state.midiPixelsPerSecond, viewportWidth: scroll.clientWidth, contentWidth: scroll.scrollWidth, padding: MIDI_PADDING });
+		syncMidiScroll(ui);
 	};
-	ui.midiZoomIn.addEventListener("click", () => zoom(0.5));
-	ui.midiZoomOut.addEventListener("click", () => zoom(-0.5));
+	ui.midiZoomIn.addEventListener("click", () => zoom(state.midiZoom + 0.5));
+	ui.midiZoomOut.addEventListener("click", () => zoom(state.midiZoom - 0.5));
+	ui.midiZoomValue.addEventListener("change", () => zoom(Number(ui.midiZoomValue.value) || state.midiZoom));
+	const manualPan = () => {
+		if (state.midiPlayback.playing && state.midiFollowPlayhead) setFollow(false);
+	};
+	for (const surface of [ui.midiRibbon, ui.midiRollScroll]) {
+		surface.addEventListener("wheel", (event) => {
+			if (!state.midi) return;
+			if (!event.altKey && !event.ctrlKey && !event.metaKey) {
+				if (event.deltaX || event.shiftKey) manualPan();
+				return;
+			}
+			event.preventDefault();
+			manualPan();
+			const delta = event.deltaY * (event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? ui.midiRollScroll.clientWidth : 1);
+			zoom(wheelZoom(state.midiZoom, delta, MIDI_MIN_ZOOM, MIDI_MAX_ZOOM), event.clientX - ui.midiRollScroll.getBoundingClientRect().left);
+		}, { passive: false });
+	}
+	ui.midiRollScroll.addEventListener("pointerdown", (event) => {
+		const scroll = ui.midiRollScroll;
+		if (event.clientY >= scroll.getBoundingClientRect().top + scroll.clientHeight) manualPan();
+	});
+	const seek = async (event) => {
+		if (!state.midi || event.target.closest("[data-note-id]")) return;
+		if (event.detail === 0 && event.target.closest("button[data-segment-id]")) return;
+		const playing = state.midiPlayback.playing;
+		const bar = event.target.closest(".midi-ruler__bar");
+		const time = bar ? Number(bar.dataset.time) : timeAtX(event.clientX - ui.midiRollScroll.getBoundingClientRect().left, ui.midiRollScroll.scrollLeft, state.midiPixelsPerSecond, getMidiDuration(state), MIDI_PADDING);
+		pauseMidiPlayback(ui, state);
+		state.midiPlayback.offset = time;
+		syncMidiPlayhead(ui, state);
+		updateMidiTransport(ui, state);
+		if (playing && time < getMidiDuration(state) - 0.02) await startMidiPlayback(ui, state);
+	};
+	ui.midiRibbon.addEventListener("click", seek);
+	ui.midiRollScroll.addEventListener("click", seek);
+	document.addEventListener("keydown", (event) => {
+		if (event.code !== "Space" && event.key !== " ") return;
+		if (document.querySelector("#panel-midi").hidden || !state.midi?.notes.length) return;
+		if (event.target.closest("input, textarea, select") || event.target.isContentEditable || event.altKey || event.ctrlKey || event.metaKey) return;
+		event.preventDefault();
+		if (!event.repeat) ui.midiPlay.click();
+	}, { capture: true });
 
 	ui.midiPlay.addEventListener("click", async () => {
 		if (state.midiPlayback.playing) {

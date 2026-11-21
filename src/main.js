@@ -53,7 +53,7 @@ const init = async () => {
 	const storage = createStorage(window.localStorage);
 	const state = createState(storage);
 
-	const midiPanel = createMidiPanel(state);
+	const midiPanel = createMidiPanel(state, storage);
 
 	const selectTab = (name) => {
 		const isMidi = name === "midi";

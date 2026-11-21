@@ -46,6 +46,7 @@
     "chord": "コード"
   },
 	"midi": {
+		"toolbar": {"analysis":"分析","audio":"オーディオ","playback":"再生とスタイル","export":"書き出し","follow":"再生ヘッドを追従","followHint":"再生ヘッドを中央に保ちます。再生中の横スクロールやズームで追従を解除します。","zoomHint":"Alt、Ctrl、Cmd + ホイールでポインター位置を中心にズーム。トラックパッドのピンチにも対応。","seekHint":"クリックで移動。小節番号をクリックすると小節の先頭へ移動します。","spaceHint":"スペース：再生／一時停止。音符にフォーカスして Enter を押すとメロディー指定を切り替えます。"},
 		"style": {"label":"スタイル","off":"オフ","rock":"ロック","pop":"ポップ","funk":"ファンク","ballad":"バラード","export":"MIDIを書き出す","preview":"試聴：{{symbol}}","chords":"コード","bass":"ベース","melody":"メロディー"},
 		"audio": {"load":"音声を読み込む","melody":"音声メロディー","idle":"音声は任意・開始時刻0で同期","analysing":"音声を解析中…","ready":"音声メロディーの解析完了","error":"音声を解析できませんでした。WAVまたはMP3をお試しください。","playback":"再生対象","all":"すべて","melodyOnly":"メロディーのみ","accompaniment":"伴奏のみ"},
 		"extraction": {"autoExtract":"自動（抽出）","hint":"音符をクリックしてメロディーを切り替えます。破線は確信度の低い音を示します。","toggle":"メロディーを切り替え: {{note}}"},
