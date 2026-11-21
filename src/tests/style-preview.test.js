@@ -18,6 +18,15 @@ const symbols = (view, style, key = "C", autoKey = true) => buildStylePreview(vi
 
 export function runStylePreviewTests() {
 	return [
+		test("Ballad preserves sixth and six-nine harmony", () => {
+			for (const symbol of ["C6", "Cm6", "C6/9"]) {
+				const chord = buildStylePreview(makeView([symbol]), "ballad").chords[0];
+				assert(chord && chord.intervals.includes(9), `${symbol} retains its sixth`);
+				assert(!chord.intervals.includes(10) && !chord.intervals.includes(11), `${symbol} does not become a seventh chord`);
+				if (symbol.includes("/9")) assert(chord.intervals.includes(2), `${symbol} retains its ninth`);
+				assert(chord.voicing.some((pitch) => pitch % 12 === 9), `${symbol} voices its sixth`);
+			}
+		}),
 		test("Every analysis template including Cmaj11 survives each style", () => {
 			for (const template of CHORD_TEMPLATES) for (const style of ["rock", "pop", "funk", "ballad"]) {
 				const view = makeView(["C"]);

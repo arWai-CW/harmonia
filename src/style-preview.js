@@ -88,7 +88,7 @@ export function buildStylePreview(view, style, { keyDefinition = getKeyDefinitio
 		if (style === "rock") replacement = "5";
 		if (style === "pop") replacement = diminished ? "dim" : isDominant && /sus4|11/.test(suffix) ? "sus4" : isMinor ? (/9/.test(suffix) ? "madd9" : "m") : /sus/.test(suffix) ? "sus4" : /9/.test(suffix) ? "add9" : "";
 		if (style === "funk" && !diminished) replacement = isDominant ? "9" : isMinor ? (/9|11|13/.test(suffix) ? "m9" : "m7") : "maj7";
-		if (style === "ballad" && !diminished && !isDominant && !/sus|aug|7|9|11|13/.test(suffix)) replacement = isMinor ? "m7" : "maj7";
+		if (style === "ballad" && !diminished && !isDominant && !/sus|aug|6|7|9|11|13/.test(suffix)) replacement = isMinor ? "m7" : "maj7";
 		const rootName = spellNotesWithOctaveInKey([Note.fromMidi(60 + root)], key)[0].replace(/-?\d+$/, "");
 		const slashName = segment.chord.symbol.split("/")[1] ?? "";
 		const slash = /^[A-G](?:#|b)*$/.test(slashName) ? slashName : null;
