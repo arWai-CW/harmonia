@@ -46,6 +46,7 @@
     "chord": "和弦"
   },
 	"midi": {
+		"style": {"label":"风格","off":"关闭","rock":"摇滚","pop":"流行","funk":"放克","ballad":"抒情","export":"导出 MIDI","preview":"试听：{{symbol}}","chords":"和弦","bass":"贝斯","melody":"旋律"},
 		"audio": {"load":"载入音频","melody":"音频旋律","idle":"音频可选・从时间 0 对齐","analysing":"正在分析音频…","ready":"音频旋律分析完成","error":"无法分析音频，请尝试 WAV 或 MP3 文件。","playback":"播放范围","all":"全部","melodyOnly":"仅旋律","accompaniment":"仅伴奏"},
 		"extraction": {"autoExtract":"自动（提取）","hint":"点击音符可切换旋律／伴奏；虚线外框表示判断置信度较低。","toggle":"切换旋律音符：{{note}}"},
 		"harmony": {"autoKey":"自动调性","melody":"旋律音轨","none":"无","major":"大调","minor":"小调","ii-V":"ii–V","ii-subV":"ii–替代属和弦","V-I":"V–I","subV-I":"替代属和弦","backdoor":"后门进行"},

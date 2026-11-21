@@ -57,6 +57,7 @@
 			import { runHarmonyAnalysisTests } from "./harmony-analysis.test.js";
 			import { runMelodyExtractionTests } from "./melody-extraction.test.js";
 			import { runAudioMelodyTests } from "./audio-melody.test.js";
+			import { runStylePreviewTests } from "./style-preview.test.js";
 
 			const allResults = [
 				...runChordUtilsTests(),
@@ -65,6 +66,7 @@
 				...runHarmonyAnalysisTests(),
 				...runMelodyExtractionTests(),
 				...runAudioMelodyTests(),
+				...runStylePreviewTests(),
 			];
 			const container = document.getElementById("results");
 
