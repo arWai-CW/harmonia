@@ -1165,6 +1165,7 @@ export const createMidiPanel = (state) => {
 			state.midiMelodyTrack = suggestMelodyTrack(source.notes);
 			const none = document.createElement("option");
 			none.value = "";
+			none.dataset.i18n = "midi.harmony.none";
 			none.textContent = t("midi.harmony.none");
 			melodySelect.replaceChildren(none, ...source.tracks.map((track) => {
 				const option = document.createElement("option");
