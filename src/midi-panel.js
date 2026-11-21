@@ -28,6 +28,7 @@ import {
 import { t } from "./i18n/index.js";
 import { labelMelodyNotes, suggestMelodyTrack } from "./harmony-analysis.js";
 import { filterPlaybackNotes } from "./audio-melody.js";
+import { buildStylePreview, buildStylePreviewMidi } from "./style-preview.js";
 
 const MIDI_ROLE_LEGEND = [
 	{ role: "root", color: "#1b1d20" },
@@ -530,8 +531,7 @@ const scheduleMidiNote = (state, note, when, duration) => {
 const pumpMidiSchedule = (state) => {
 	const playback = state.midiPlayback;
 	if (!playback.playing || !state.midi) return;
-	const notes = state.midi.notes;
-	const allowed = new Set(filterPlaybackNotes(notes, state.midiPlaybackMode, state.midiMelodyTrack, state.midi.melodyExtraction?.melody).map((note) => note.id));
+	const notes = state.midiPlaybackNotes ?? state.midi.notes;
 	const position = getMidiPosition(state);
 	const horizon = position + MIDI_LOOKAHEAD_SECONDS;
 	const context = playback.audioContext;
@@ -540,7 +540,6 @@ const pumpMidiSchedule = (state) => {
 		const note = notes[playback.cursor];
 		if (note.startTime > horizon) break;
 		playback.cursor += 1;
-		if (!allowed.has(note.id)) continue;
 		const start = Math.max(note.startTime, position);
 		if (note.endTime <= start + 0.01) continue;
 		const when =
@@ -598,10 +597,11 @@ const startMidiPlayback = async (ui, state) => {
 	playback.playing = true;
 	playback.startedAt = context.currentTime;
 	if (playback.offset < 0.05) ui.midiRollScroll.scrollLeft = 0;
-	playback.cursor = state.midi.notes.findIndex(
+	const notes = state.midiPlaybackNotes ?? state.midi.notes;
+	playback.cursor = notes.findIndex(
 		(note) => note.endTime > playback.offset + 0.001,
 	);
-	if (playback.cursor < 0) playback.cursor = state.midi.notes.length;
+	if (playback.cursor < 0) playback.cursor = notes.length;
 	playback.master.gain.cancelScheduledValues(context.currentTime);
 	playback.master.gain.setValueAtTime(MIDI_MASTER_GAIN, context.currentTime);
 
@@ -855,6 +855,13 @@ const renderMidiView = (ui, state, keyDefinition) => {
 			? t("midi.undetermined")
 			: (chordFunction?.roman ?? t("midi.detail.outOfKey"));
 		button.append(symbol, roman);
+		const restyled = state.midiStylePreview?.chords.find((chord) => chord.segmentId === segment.id);
+		if (restyled) {
+			button.classList.add("has-preview");
+			roman.textContent = `→ ${restyled.symbol}`;
+			roman.setAttribute("aria-label", t("midi.style.preview", { symbol: restyled.symbol }));
+			button.title += ` · ${t("midi.style.preview", { symbol: restyled.symbol })}`;
+		}
 		ui.midiRibbonInner.append(button);
 	});
 
@@ -1106,6 +1113,7 @@ export const createMidiPanel = (state) => {
 	state.midiMelodyTrack = null;
 	state.midiMelodyOverrides = new Map();
 	state.midiPlaybackMode = "all";
+	state.midiStyle = "off";
 	let audioCues = null;
 	let audioWorker = null;
 	let audioGeneration = 0;
@@ -1171,6 +1179,42 @@ export const createMidiPanel = (state) => {
 	}
 	playbackLabel.append(localized("span", "playback"), playbackMode);
 	audioControls.append(loadAudio, audioInput, audioName, audioLabel, audioStatus, playbackLabel);
+	const styleLabel = document.createElement("label");
+	const styleText = document.createElement("span");
+	styleText.dataset.i18n = "midi.style.label";
+	styleText.textContent = t("midi.style.label");
+	const styleSelect = document.createElement("select");
+	styleSelect.id = "midi-style";
+	for (const style of ["off", "rock", "pop", "funk", "ballad"]) {
+		const option = document.createElement("option");
+		option.value = style; option.dataset.i18n = `midi.style.${style}`;
+		option.textContent = t(`midi.style.${style}`);
+		styleSelect.append(option);
+	}
+	styleLabel.append(styleText, styleSelect);
+	const exportStyle = document.createElement("button");
+	exportStyle.id = "midi-export-style";
+	exportStyle.type = "button";
+	exportStyle.className = "midi-file-button";
+	exportStyle.dataset.i18n = "midi.style.export";
+	exportStyle.textContent = t("midi.style.export");
+	exportStyle.disabled = true;
+	audioControls.append(styleLabel, exportStyle);
+	styleSelect.addEventListener("change", () => { state.midiStyle = styleSelect.value; refreshMidiView(true); });
+	exportStyle.addEventListener("click", () => {
+		if (!state.midiStylePreview) return;
+		const view = state.midi;
+		const melody = filterPlaybackNotes(view.notes, "melody", state.midiMelodyTrack, view.melodyExtraction?.melody);
+		const tempo = 60 * view.timeSignature[0] * 4 / view.timeSignature[1] / view.barDuration;
+		const trackNames = ["chords", "bass", "melody"].map((role) => t(`midi.style.${role}`));
+		const midi = buildStylePreviewMidi(state.midiStylePreview, melody, { tempo, timeSignature: view.timeSignature, trackNames });
+		const url = URL.createObjectURL(new Blob([midi.toArray()], { type: "audio/midi" }));
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `${(view.sourceName ?? "preview").replace(/\.midi?$/i, "")}-${state.midiStyle}.mid`;
+		link.click();
+		window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+	});
 	controls.after(audioControls);
 	loadAudio.addEventListener("click", () => audioInput.click());
 	const setAudioStatus = (key) => {
@@ -1181,6 +1225,7 @@ export const createMidiPanel = (state) => {
 	playbackMode.addEventListener("change", () => {
 		stopMidiPlayback(ui, state, false);
 		state.midiPlaybackMode = playbackMode.value;
+		refreshMidiView();
 	});
 	audioInput.addEventListener("change", async () => {
 		const file = audioInput.files?.[0];
@@ -1258,7 +1303,7 @@ export const createMidiPanel = (state) => {
 
 	const refreshMidiView = (stopPlayback = false) => {
 		if (!state.midiSource) return;
-		if (stopPlayback || (state.midiPlayback.playing && state.midiPlaybackMode !== "all")) stopMidiPlayback(ui, state);
+		if (stopPlayback || (state.midiPlayback.playing && (state.midiPlaybackMode !== "all" || state.midiStyle !== "off"))) stopMidiPlayback(ui, state);
 		const keyDefinition = getKeyDefinition(state.keyRoot, state.keyMode);
 		const view = filterMidiView(
 			state.midiSource,
@@ -1269,6 +1314,12 @@ export const createMidiPanel = (state) => {
 			audioToggle.checked && audioCues ? audioCues : {},
 		);
 		state.midi = view;
+		state.midiStylePreview = state.midiStyle === "off" ? null : buildStylePreview(view, state.midiStyle, { keyDefinition, autoKey: state.midiAutoKey });
+		exportStyle.disabled = !state.midiStylePreview?.notes.length;
+		const melody = filterPlaybackNotes(view.notes, "melody", state.midiMelodyTrack, view.melodyExtraction?.melody);
+		state.midiPlaybackNotes = state.midiStylePreview
+			? [...(state.midiPlaybackMode === "melody" ? [] : state.midiStylePreview.notes), ...(state.midiPlaybackMode === "accompaniment" ? [] : melody)].sort((a, b) => a.startTime - b.startTime || a.midi - b.midi)
+			: filterPlaybackNotes(view.notes, state.midiPlaybackMode, state.midiMelodyTrack, view.melodyExtraction?.melody);
 		if (!view.segments.some((segment) => segment.id === state.midiSelectedId)) {
 			state.midiSelectedId = view.segments[0]?.id ?? null;
 		}
@@ -1317,6 +1368,7 @@ export const createMidiPanel = (state) => {
 			setAudioStatus("idle");
 			audioControls.hidden = false;
 			state.midiPlaybackMode = "all"; playbackMode.value = "all";
+			state.midiStyle = "off"; styleSelect.value = "off";
 			state.midiMelodyTrack = suggestMelodyTrack(source.notes);
 			state.midiMelodyOverrides = new Map();
 			extractionHint.hidden = true;
