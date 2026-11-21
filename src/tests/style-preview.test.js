@@ -76,6 +76,8 @@ export function runStylePreviewTests() {
 			const parsed = new Midi(buildStylePreviewMidi(preview, melody).toArray());
 			assert(parsed.tracks.length === 3 && parsed.tracks.map((track) => track.name).join() === "Chords,Bass,Melody", "three named tracks");
 			assert(parsed.tracks[2].notes[0].midi === 72, "melody retained");
+			assert(parsed.tracks.map((track) => track.channel).join() === "0,1,2", "parts use distinct non-percussion channels");
+			assert(parsed.tracks.map((track) => track.instrument.number).join() === "0,33,0", "part programs survive round-trip");
 			assert(parsed.tracks[0].notes.length === preview.notes.filter((note) => note.role === "chord").length, "chord events retained");
 			const localized = new Midi(buildStylePreviewMidi(preview, melody, { tempo: 100, timeSignature: [3, 4], trackNames: ["和弦", "貝斯", "旋律"] }).toArray());
 			assert(localized.header.timeSignatures[0].timeSignature.join() === "3,4" && localized.header.tempos[0].bpm === 100, "export meter and tempo");

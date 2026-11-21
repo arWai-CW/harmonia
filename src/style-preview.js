@@ -136,6 +136,7 @@ export function buildStylePreviewMidi(preview, melody = [], { tempo = 120, timeS
 	midi.header.timeSignatures.push({ ticks: 0, timeSignature });
 	for (const [name, notes, instrument] of [[trackNames[0], preview.notes.filter((note) => note.role === "chord"), 0], [trackNames[1], preview.notes.filter((note) => note.role === "bass"), 33], [trackNames[2], melody, 0]]) {
 		const track = midi.addTrack(); track.name = name; track.instrument.number = instrument;
+		track.channel = midi.tracks.length - 1;
 		for (const note of notes) if (note.endTime > note.startTime) track.addNote({ midi: note.midi, time: note.startTime, duration: note.endTime - note.startTime, velocity: note.velocity ?? 0.8 });
 	}
 	return midi;
