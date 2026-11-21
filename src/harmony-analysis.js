@@ -83,9 +83,9 @@ export function findTwoFiveChains(segments) {
 			type = mod(b.root - a.root) === 5 ? "ii-V" : "ii-subV";
 			target = mod(b.root + 5); mode = a.quality === "half-dim" ? "minor" : "major";
 			if (type === "ii-subV") target = mod(a.root - 2);
-			if (a.quality === "minor" && type === "ii-V" && c?.root === mod(b.root + 2)) { type = "backdoor"; target = c.root; }
+			if (a.quality === "minor" && type === "ii-V" && c?.root === mod(b.root + 2) && ["major", "dominant"].includes(c.quality)) { type = "backdoor"; target = c.root; }
 			end = b; next = c; i++;
-		} else if (a.quality === "dominant" && b && [5, 11, 2].includes(mod(b.root - a.root))) {
+		} else if (a.quality === "dominant" && b && ([5, 11].includes(mod(b.root - a.root)) || (mod(b.root - a.root) === 2 && ["major", "dominant"].includes(b.quality)))) {
 			type = ({ 5: "V-I", 11: "subV-I", 2: "backdoor" })[mod(b.root - a.root)]; target = b.root;
 			mode = ["minor", "half-dim", "dim"].includes(b.quality) ? "minor" : "major";
 		} else continue;

@@ -11,6 +11,17 @@ const test = (name, fn) => {
 
 export function runHarmonyAnalysisTests() {
 	return [
+		test("Deceptive ii–V to minor vi is not a backdoor", () => {
+			const patterns = findTwoFiveChains(segments(["Dm7", "G7", "Am7"]));
+			assert(patterns.length === 1 && patterns[0].type === "ii-V" && patterns[0].targetRoot === "C" && !patterns[0].resolved, JSON.stringify(patterns));
+		}),
+		test("Lone backdoor dominants require major or dominant arrival", () => {
+			assert(findTwoFiveChains(segments(["G7", "Am7"])).length === 0, "minor arrival is not a backdoor");
+			for (const arrival of ["C", "Cmaj7", "C7"]) {
+				const pattern = findTwoFiveChains(segments(["Bb7", arrival]))[0];
+				assert(pattern?.type === "backdoor" && pattern.targetRoot === "C" && pattern.resolved, arrival);
+			}
+		}),
 		test("Melody ending two bars after accompaniment has no chord label", () => {
 			const notes = [{ id: "late", trackIndex: 1, midi: 60, startTime: 6, endTime: 6.5, startTick: 5760, endTick: 6240 }];
 			assert(labelMelodyNotes(notes, segments(["Cmaj7"]), 1, 480, 2).size === 0, "two-bar rest");
