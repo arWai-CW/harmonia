@@ -960,7 +960,7 @@ const renderMidiView = (ui, state, keyDefinition) => {
 
 	const selectedNoteIds = new Set(selected?.noteIds ?? []);
 	const showNoteTitles = view.notes.length <= 4000;
-	const melodyLabels = labelMelodyNotes(view.notes, view.segments, state.midiMelodyTrack, view.ppq);
+	const melodyLabels = labelMelodyNotes(view.notes, view.segments, state.midiMelodyTrack, view.ppq, view.barDuration);
 	view.notes.forEach((note) => {
 		const selectedNote = selectedNoteIds.has(note.id);
 		const baseNote =

@@ -11,6 +11,19 @@ const test = (name, fn) => {
 
 export function runHarmonyAnalysisTests() {
 	return [
+		test("Melody ending two bars after accompaniment has no chord label", () => {
+			const notes = [{ id: "late", trackIndex: 1, midi: 60, startTime: 6, endTime: 6.5, startTick: 5760, endTick: 6240 }];
+			assert(labelMelodyNotes(notes, segments(["Cmaj7"]), 1, 480, 2).size === 0, "two-bar rest");
+			assert(labelMelodyNotes(notes, segments(["Cmaj7"]), 1, 480).size === 0, "four-beat fallback");
+		}),
+		test("Melody carries chords through short comping gaps, not past the next chord", () => {
+			const chords = segments(["Cmaj7", "Dm7"]);
+			chords[0].endTime = 1.5;
+			const notes = [1.75, 2].map((startTime, i) => ({ id: `gap${i}`, trackIndex: 1, midi: 60, startTime, endTime: startTime + 0.5, startTick: startTime * 960, endTick: startTime * 960 + 480 }));
+			const labels = labelMelodyNotes(notes, chords, 1, 480, 2);
+			assert(labels.get("gap0")?.label === "1", "half-beat comping gap uses C");
+			assert(labels.get("gap1")?.label === "b7", "next chord starts: use Dm7");
+		}),
 		test("All 24 detected keys round-trip through the key table", () => {
 			const profiles = {
 				major: [6.35, 2.23, 3.48, 2.33, 4.38, 4.09, 2.52, 5.19, 2.39, 3.66, 2.29, 2.88],

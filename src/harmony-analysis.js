@@ -100,7 +100,7 @@ export function findTwoFiveChains(segments) {
 const DEGREES = ["1", "b9", "9", "#9", "3", "11", "#11", "5", "b13", "13", "b7", "7"];
 const CORE = { "1P": "1", "3m": "b3", "3M": "3", "5d": "b5", "5P": "5", "5A": "#5", "7d": "bb7", "7m": "b7", "7M": "7" };
 
-export function labelMelodyNotes(notes, segments, melodyTrackIndex, ppq) {
+export function labelMelodyNotes(notes, segments, melodyTrackIndex, ppq, barDuration) {
 	const labels = new Map();
 	if (melodyTrackIndex === null || melodyTrackIndex === undefined) return labels;
 	const melody = notes.filter((n) => n.trackIndex === melodyTrackIndex).sort((a, b) => a.startTime - b.startTime);
@@ -108,6 +108,11 @@ export function labelMelodyNotes(notes, segments, melodyTrackIndex, ppq) {
 	melody.forEach((note, i) => {
 		const segment = chords.findLast((s) => s.startTime <= note.startTime);
 		if (!segment) return;
+		if (note.startTime >= segment.endTime) {
+			const beatDuration = (note.endTime - note.startTime) * ppq / (note.endTick - note.startTick);
+			const maxGap = barDuration ?? beatDuration * 4;
+			if (!Number.isFinite(maxGap) || note.startTime - segment.endTime > maxGap) return;
+		}
 		const chord = segment.chord;
 		const parsed = Chord.get(chord.symbol);
 		const root = Note.chroma(chord.root ?? parsed.tonic);
