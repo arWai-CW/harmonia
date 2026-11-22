@@ -25,6 +25,7 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 	const inferredBeat = valid.find((note) => note.endTick > note.startTick);
 	const secondsPerBeat = beatDuration ?? (ppq > 0 && inferredBeat ? (inferredBeat.endTime - inferredBeat.startTime) * ppq / (inferredBeat.endTick - inferredBeat.startTick) : 0.5);
 	const tolerance = Math.min(0.06, secondsPerBeat * 0.08);
+	const legatoTolerance = Math.min(0.1, secondsPerBeat * 0.2);
 	const clusters = [];
 	for (const note of valid) {
 		const cluster = clusters.at(-1);
@@ -35,10 +36,10 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 		const cluster = clusters[i];
 		const previous = clusters[i - 1];
 		const reset = previous && cluster.time - previous.time >= (barDuration ?? secondsPerBeat * 4);
+		const resetHistory = (from) => reset && !(from?.lastEndTime > cluster.time + legatoTolerance);
 		const pitches = cluster.notes.map((note) => note.midi);
 		const low = Math.min(...pitches), high = Math.max(...pitches);
-		cluster.states = [...cluster.notes, null].map((note) => {
-			if (!note) return { note: null, emission: cluster.notes.length >= 3 ? -0.05 : -0.65 };
+		cluster.states = cluster.notes.map((note) => {
 			const beats = ppq > 0 && note.endTick > note.startTick ? (note.endTick - note.startTick) / ppq : (note.endTime - note.startTime) / secondsPerBeat;
 			const neighbours = cluster.notes.filter((other) => other !== note && Math.abs(note.midi - other.midi) <= 5);
 			const inner = neighbours.some((n) => n.midi > note.midi) && neighbours.some((n) => n.midi < note.midi);
@@ -48,9 +49,16 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 				- (inner ? 0.5 : neighbours.length >= 2 ? 0.4 : neighbours.length ? 0.18 : 0) + velocity + (audioMelody ? 3 * (audioMelody.get(note.id) ?? 0) : 0);
 			return { note, emission };
 		});
+		const holds = new Set(previous?.states.filter((from) => from.lastEndTime > cluster.time + legatoTolerance).map((from) => from.lastNote));
+		cluster.states.push({ note: null, emission: cluster.notes.length >= 3 ? -0.05 : -0.65 },
+			...[...holds].map((hold) => ({ note: null, hold, emission: 0 })));
 		cluster.edges = cluster.states.map((state) => previous?.states.map((from) => {
-			if (reset) return 0;
+			if (state.hold) return from.lastNote === state.hold ? 0 : Infinity;
+			if (!state.note && from.lastEndTime > cluster.time + legatoTolerance) return Infinity;
+			if (resetHistory(from)) return 0;
+			const overlap = (from.lastEndTime ?? -Infinity) - (state.note?.startTime ?? cluster.time);
 			if (!state.note) return from.note ? 0.2 : 0;
+			if (overlap > legatoTolerance) return 4 + overlap / secondsPerBeat;
 			if (from.lastPitch === undefined) return 0.15;
 			const leap = Math.abs(state.note.midi - from.lastPitch);
 			return leap * 0.04 + Math.max(0, leap - 5) * 0.075 + Math.max(0, leap - 12) * 0.06
@@ -67,8 +75,11 @@ export function extractMelodyLine(notes, { ppq, beatDuration, barDuration, overr
 			}
 			state.score = best + state.emission;
 			state.parent = parent;
-			const from = reset ? undefined : previous?.states[parent];
+			let from = previous?.states[parent];
+			if (resetHistory(from)) from = undefined;
 			state.lastPitch = state.note?.midi ?? from?.lastPitch;
+			state.lastEndTime = state.note?.endTime ?? from?.lastEndTime;
+			state.lastNote = state.note ?? from?.lastNote;
 			state.register = state.note ? (from?.register === undefined ? state.note.midi : from.register * 0.65 + state.note.midi * 0.35) : from?.register;
 		});
 	}
