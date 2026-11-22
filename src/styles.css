@@ -1,7 +1,4 @@
 
-.midi-harmony-controls[hidden] { display: none; }
-.midi-harmony-controls { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 10px; font-size: 13px; }
-.midi-harmony-controls label { display: flex; align-items: center; gap: 8px; }
 .midi-key-region { position: absolute; top: 26px; height: 22px; background: #e0e7ff; color: #3730a3; padding-left: 5px; overflow: hidden; white-space: nowrap; font-size: 12px; border-radius: 4px; }
 .midi-harmony-bracket { position: absolute; top: 53px; height: 26px; border-width: 1px 1px 0; text-align: center; white-space: nowrap; overflow: hidden; font-size: 12px; }
 @import "tailwindcss";
@@ -27,6 +24,59 @@
 }
 
 @layer components {
+	.midi-controls {
+		@apply my-4 grid gap-3 rounded-2xl border border-ink/10 bg-pearl/70 p-3;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+	}
+	.midi-controls__group {
+		@apply min-w-0 rounded-xl border border-ink/10 bg-white/65 px-3 pb-3;
+	}
+	.midi-controls__group legend {
+		@apply px-1 text-[10px] font-semibold tracking-wider text-ink/50;
+	}
+	.midi-controls__group--playback { grid-column: 1 / -1; }
+	.midi-controls__items {
+		@apply flex min-w-0 flex-wrap items-center gap-x-4 gap-y-2 pt-1;
+	}
+	.midi-controls label {
+		@apply flex min-w-0 items-center gap-2 text-xs text-ink/70;
+	}
+	.midi-controls select {
+		@apply h-9 min-w-0 max-w-48 rounded-lg border border-ink/15 bg-white px-2 text-xs text-ink outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50;
+	}
+	.midi-controls .midi-file-button,
+	.midi-controls .midi-transport__button {
+		@apply h-9 rounded-lg;
+	}
+	.midi-controls button:disabled { @apply cursor-not-allowed opacity-40; }
+	.midi-controls .midi-transport { @apply border-0 bg-transparent p-0; }
+	.midi-controls .midi-transport__tempo { @apply ml-0; }
+	.midi-controls .midi-switch { @apply h-9 shrink-0 gap-2; }
+	.midi-switch input {
+		@apply relative h-5 w-8 shrink-0 cursor-pointer appearance-none rounded-full bg-ink/20 outline-none transition-colors checked:bg-indigo-600 focus-visible:ring-2 focus-visible:ring-indigo-500/50 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-35;
+	}
+	.midi-switch input::after {
+		@apply absolute left-0.5 top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform;
+		content: "";
+	}
+	.midi-switch input:checked::after { transform: translateX(12px); }
+	.midi-switch:has(input:disabled) { @apply text-ink/35; }
+	#midi-audio-name { @apply max-w-40 truncate text-[11px] text-ink/55; }
+	.midi-controls [role="status"] { @apply text-[11px] text-ink/55; }
+	.midi-zoom__value { @apply h-8 w-14 rounded-lg border border-ink/15 bg-white text-center text-xs; }
+	.midi-ruler, .midi-ribbon, .midi-roll-scroll { cursor: crosshair; }
+	@media (max-width: 900px) {
+		.midi-controls { grid-template-columns: minmax(0, 1fr) auto; }
+		.midi-controls__group--analysis, .midi-controls__group--audio { grid-column: 1 / -1; }
+		.midi-controls__group--export { grid-column: 2; grid-row: 3; }
+		.midi-controls__group--playback { grid-column: 1; grid-row: 3; }
+	}
+	@media (max-width: 540px) {
+		.midi-controls { @apply grid-cols-1 gap-2 p-2; }
+		.midi-controls__group--export, .midi-controls__group--playback { grid-column: 1; grid-row: auto; }
+		.midi-controls__group--export { order: 1; }
+		.midi-controls__items { @apply gap-x-3; }
+	}
 	.glass-card {
 		@apply relative rounded-[28px] border border-white/60 bg-white/75 p-8 shadow-[var(--shadow-soft)] backdrop-blur-2xl sm:p-12;
 	}

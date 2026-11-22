@@ -48,7 +48,7 @@ The detail panel separates the basic triad, guide tones and extensions. The sele
 Choose **Auto (extract)** in the Melody selector for mixed piano MIDI. Notes from the enabled tracks are merged into onset clusters, without relying on track or hand identity. A Viterbi-style path balances pitch height, duration, chord position and continuity, so it can follow the line into the left hand while the right hand comps above it.
 
 - Extracted notes are highlighted; dashed outlines indicate low confidence.
-- Click a note, or focus it and press Enter/Space, to toggle melody membership. Harmony and melody labels recompute immediately.
+- Click a note, or focus it and press Enter, to toggle melody membership. Space plays or pauses MIDI; harmony and melody labels recompute after corrections.
 - Corrections stay in memory for the loaded file; they are not saved into the source MIDI.
 - MuScriptor writes constant velocity 100. Constant or nearly constant velocity is automatically ignored rather than treated as a loudness measurement.
 

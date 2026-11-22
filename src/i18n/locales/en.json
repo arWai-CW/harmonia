@@ -46,6 +46,7 @@
     "chord": "Chords"
   },
 	"midi": {
+		"toolbar": {"analysis":"Analysis","audio":"Audio","playback":"Playback & style","export":"Export","follow":"Follow playhead","followHint":"Keep the playhead centered. Horizontal wheel scrolling or zooming during playback turns follow off.","zoomHint":"Alt, Ctrl or Cmd + wheel to zoom at the pointer. Pinch to zoom on a trackpad.","seekHint":"Click to seek. Bar numbers jump to the bar start.","spaceHint":"Space: play / pause. Enter on a note toggles its melody flag."},
 		"style": {"label":"Style","off":"Off","rock":"Rock","pop":"Pop","funk":"Funk","ballad":"Ballad","export":"Export MIDI","preview":"Preview: {{symbol}}","chords":"Chords","bass":"Bass","melody":"Melody"},
 		"audio": {"load":"Load audio","melody":"Audio melody","idle":"Audio optional · aligned at time 0","analysing":"Analysing audio…","ready":"Audio melody ready","error":"Could not analyse audio. Try a WAV or MP3 file.","playback":"Playback","all":"All","melodyOnly":"Melody only","accompaniment":"Accompaniment only"},
 		"extraction": {"autoExtract":"Auto (extract)","hint":"Click a note to toggle melody. Dashed outlines indicate low confidence.","toggle":"Toggle melody: {{note}}"},

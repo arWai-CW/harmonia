@@ -58,6 +58,7 @@
 			import { runMelodyExtractionTests } from "./melody-extraction.test.js";
 			import { runAudioMelodyTests } from "./audio-melody.test.js";
 			import { runStylePreviewTests } from "./style-preview.test.js";
+			import { runMidiTransportTests } from "./midi-transport.test.js";
 
 			const allResults = [
 				...runChordUtilsTests(),
@@ -67,6 +68,7 @@
 				...runMelodyExtractionTests(),
 				...runAudioMelodyTests(),
 				...runStylePreviewTests(),
+				...runMidiTransportTests(),
 			];
 			const container = document.getElementById("results");
 

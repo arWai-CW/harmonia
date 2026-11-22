@@ -4,6 +4,7 @@ export const STORAGE_KEYS = {
 	KEY_ROOT: "harmonia.keyRoot",
 	KEY_MODE: "harmonia.keyMode",
 	INPUT_MODE: "harmonia.inputMode",
+	MIDI_FOLLOW_PLAYHEAD: "harmonia.midiFollowPlayhead",
 };
 
 export const createStorage = (backend) => ({
@@ -38,6 +39,7 @@ export const createState = (storage) => ({
 	midiEnabledTracks: new Set(),
 	midiSelectedId: null,
 	midiZoom: 1,
+	midiFollowPlayhead: storage.load(STORAGE_KEYS.MIDI_FOLLOW_PLAYHEAD, true),
 	midiLoading: false,
 	midiPixelsPerSecond: 60,
 	midiPlayback: {
@@ -67,6 +69,7 @@ const flushPersist = () => {
 	storage.save(STORAGE_KEYS.PROGRESSION_HISTORY, state.progressionHistory);
 	storage.save(STORAGE_KEYS.KEY_ROOT, state.keyRoot);
 	storage.save(STORAGE_KEYS.KEY_MODE, state.keyMode);
+	storage.save(STORAGE_KEYS.MIDI_FOLLOW_PLAYHEAD, state.midiFollowPlayhead);
 };
 
 export const persistState = (storage, state) => {
@@ -87,4 +90,5 @@ export const persistStateImmediate = (storage, state) => {
 	storage.save(STORAGE_KEYS.PROGRESSION_HISTORY, state.progressionHistory);
 	storage.save(STORAGE_KEYS.KEY_ROOT, state.keyRoot);
 	storage.save(STORAGE_KEYS.KEY_MODE, state.keyMode);
+	storage.save(STORAGE_KEYS.MIDI_FOLLOW_PLAYHEAD, state.midiFollowPlayhead);
 };
